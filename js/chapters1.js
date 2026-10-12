@@ -75,8 +75,10 @@ C.c1_desfeito = async () => {
   const copo = item('copo');
   Audio2.sfx('undo'); G.fx.rewind = 1; G.player.glowT = 1;
   FX.burst(copo.x, copo.y - 2, 14, '#8fd8ff', 30, 0.6);
+  copo.rewinding = 0; copo.history = [];
   await wait(0.4);
-  copo.broken = false; copo.x = T(3) + 8; copo.y = T(2) + 10; copo.z = 8; copo.suspended = true; copo.tk = false;
+  copo.rewinding = 0; copo.history = [];
+  copo.broken = false; copo.vx = copo.vy = copo.vz = 0; copo.x = T(3) + 8; copo.y = T(2) + 10; copo.z = 8; copo.suspended = true; copo.tk = false;
   FX.burst(copo.x, copo.y - 8, 10, '#8fd8ff', 20, 0.6);
   G.stats.desfeitos++;
   await wait(0.6);

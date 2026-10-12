@@ -48,7 +48,9 @@ const Mini = {
       { k: 'bike', label: 'A bicicleta do primo' }, { k: 'primo', label: 'O primo' }, { k: 'casa', label: 'A casa da avó' },
       { k: 'avo', label: 'A avó' }, { k: 'cafe', label: 'O café coado no pano' }, { k: 'sol', label: 'A tarde de 2009' },
     ].map((f, i) => Object.assign(f, { a: i / 6 * Math.PI * 2 + 0.3, r: 46, out: 0, lost: 0, grab: 0 }));
-    let ret = { x: cx, y: cy - 30 }, t = 0, dur = 36, scream = 0, fail = false, done = false, endT = 0, sh = 0;
+    Mini._memTries = (Mini._memTries || 0) + 1;
+    const ease = Math.max(0.45, 1 - (Mini._memTries - 1) * 0.2); // fica mais fácil a cada tentativa
+    let ret = { x: cx, y: cy - 30 }, t = 0, dur = 30, scream = 0, fail = false, done = false, endT = 0, sh = 0;
     const DMAX = 108;
     const avo = Sprites.human('Avo', CAST.Avo || (CAST.Avo = Object.assign({}, CAST.MaeTeo, { skin: ['#f0cba8', '#d6ad8a', '#ad856a'], top: { style: 'dress', c: ['#8a6a9a', '#705080', '#563c64', '#3e2a48'] }, sad: false, smile: true, glasses: '#6a5a4a' })));
     const primo = Sprites.human('Primo', CAST.Primo || (CAST.Primo = Object.assign({}, CAST.Menino, { hair: { style: 'curly', c: ['#2a1a12', '#3e2a1c', '#5e412c', '#7d583c'] }, top: { style: 'tshirt', c: ['#e85a5a', '#c44444', '#8c2f2f', '#5a1f1f'] } })));
@@ -65,29 +67,30 @@ const Mini = {
       ctx.globalAlpha = 1;
     };
     return this.start({
+      kind: 'memoria', get fr() { return FR; }, get ret() { return ret; },
       update(dt) {
         if (done || fail) { endT += dt; if (endT > 1.6) { Audio2.playSong(G.map ? G.map.music : null); this.resolve(done); } return; }
         t += dt; scream = Math.max(0, scream - dt); sh = Math.max(0, sh - dt * 8);
         const [ax, ay] = Input.axis();
-        ret.x = U.clamp(ret.x + ax * 170 * dt, 10, W - 10); ret.y = U.clamp(ret.y + ay * 170 * dt, 10, H - 10);
+        ret.x = U.clamp(ret.x + ax * 210 * dt, 10, W - 10); ret.y = U.clamp(ret.y + ay * 210 * dt, 10, H - 10);
         if (Input.hit('act') && scream <= 0) {
-          scream = 6; sh = 5; Audio2.sfx('tear'); Audio2.tone(140, 0.6, 'sawtooth', 0.12, 0, null, 0.6);
-          for (const f of FR) if (!f.gone) f.r = Math.max(30, f.r - 26);
+          scream = 5; sh = 5; Audio2.sfx('tear'); Audio2.tone(140, 0.6, 'sawtooth', 0.12, 0, null, 0.6);
+          for (const f of FR) if (!f.gone) f.r = Math.max(30, f.r - 32);
         }
         const k = t / dur;
         for (const f of FR) {
           if (f.gone) continue;
           f.a += dt * (0.15 + Math.sin(t + f.a) * 0.05);
-          const speed = 5 + k * 16 + Math.sin(t * 1.7 + f.a * 3) * 3;
+          const speed = (4 + k * 10 + Math.sin(t * 1.7 + f.a * 3) * 2) * ease;
           const fx = cx + Math.cos(f.a) * f.r * 1.7, fy = cy + Math.sin(f.a) * f.r;
           f.x = fx; f.y = fy;
-          f.grab = U.dist(ret.x, ret.y, fx, fy) < 20;
-          if (f.grab) { f.r = Math.max(28, f.r - 62 * dt); if (Math.random() < 0.4) FX.ember(fx - G.cam.x + G.cam.x, fy); }
+          f.grab = U.dist(ret.x, ret.y, fx, fy) < 24;
+          if (f.grab) { f.r = Math.max(28, f.r - 85 * dt); if (Math.random() < 0.4) FX.ember(fx - G.cam.x + G.cam.x, fy); }
           else f.r += speed * dt;
-          if (f.r > DMAX) { f.lost += dt; if (f.lost > 1.4) { fail = true; Audio2.sfx('glass'); } }
+          if (f.r > DMAX) { f.lost += dt; if (f.lost > 2.2) { fail = true; Audio2.sfx('glass'); } }
           else f.lost = Math.max(0, f.lost - dt * 2);
         }
-        if (t >= dur) { done = true; Audio2.sfx('questDone'); }
+        if (t >= dur) { done = true; Mini._memTries = 0; Audio2.sfx('questDone'); }
       },
       draw() {
         const k = U.clamp(t / dur, 0, 1);

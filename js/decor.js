@@ -204,7 +204,7 @@ Object.assign(PROPDEF, {
     { t: 'estante', x: T(12) + 2, y: T(1) + 2, id: 'estante', act: 'estante' },
     { t: 'coffeeTable', x: T(9) + 12, y: T(7) + 2, id: 'mesinha' },
     { t: 'sofa', x: T(9) + 2, y: T(8), id: 'sofa', act: 'sofa' },
-    { t: 'floorLamp', x: T(12) + 6, y: T(7) + 8, id: 'abajur', act: 'abajur', st: { color: '#f0d8a0' }, light: { r: 56, a: 0.9, oy: 6 } },
+    { t: 'floorLamp', x: T(8) + 4, y: T(7) + 6, id: 'abajur', act: 'abajur', st: { color: '#f0d8a0' }, light: { r: 56, a: 0.9, oy: 6 } },
     { t: 'broom', x: T(13) + 6, y: T(10) + 4, id: 'vassoura', act: 'vassoura' },
     { t: 'doormat', x: T(9) - 1, y: T(12) + 6 },
     { t: 'flowerPot', x: T(10) + 2, y: T(11) + 6 },

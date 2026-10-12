@@ -404,7 +404,13 @@ const Sprites = {
         return c;
       });
     });
-    for (const d of rows) for (const o of order) set[d].push(cells[d][o]);
+    for (const d of ['down', 'up']) for (const o of order) set[d].push(cells[d][o]);
+    // a folha original tem o 3º quadro de cada linha lateral virado para o lado oposto;
+    // monta a direita com quadros que olham para a direita e espelha para a esquerda
+    const rStand = cells.right[1], rA = cells.right[0], rB = Art.flip(cells.left[0]);
+    rB.footY = rA.footY;
+    set.right = [rStand, rA, rStand, rB];
+    set.left = set.right.map(c => { const f = Art.flip(c); f.footY = c.footY; return f; });
     set.blink.push(cells.down[1]);
     Art.cache.set(ck, set);
     return set;

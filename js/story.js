@@ -150,10 +150,14 @@ const Story = {
       if (!pr.act || pr.hidden || !this.acts[pr.act]) continue;
       const r = pr.solidBox ? { x: pr.solidBox.x - 6, y: pr.solidBox.y - 8, w: pr.solidBox.w + 12, h: pr.solidBox.h + 14 } : { x: pr.x - 4, y: pr.y - 4, w: pr.w + 8, h: pr.h + 10 };
       if (pr.wallMounted) r.h += 18;
-      if (fx > r.x && fx < r.x + r.w && fy > r.y && fy < r.y + r.h) {
-        const d = U.dist(fx, fy, pr.x + pr.w / 2, pr.y + pr.h / 2);
-        if (d < bd) { bd = d; best = { kind: 'prop', o: pr }; }
+      // distância do ponto à frente do V até a borda do objeto (0 = dentro); empate pelo centro
+      let bestD = 1e9;
+      for (const reach of [6, 11, 16]) {
+        const [qx, qy] = p.facingPoint(reach);
+        const ddx = Math.max(r.x - qx, 0, qx - (r.x + r.w)), ddy = Math.max(r.y - qy, 0, qy - (r.y + r.h));
+        if (ddx === 0 && ddy === 0) bestD = Math.min(bestD, U.dist(qx, qy, pr.x + pr.w / 2, pr.y + pr.h / 2) * 0.01 + reach * 0.1);
       }
+      if (bestD < bd) { bd = bestD; best = { kind: 'prop', o: pr }; }
     }
     return best;
   },
