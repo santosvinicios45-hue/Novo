@@ -690,6 +690,8 @@
     return render(B[id], b.el, 'boss-art');
   };
   Art.list = () => Object.keys(D);
+  // usado por art2.js (expansão) para registrar novos desenhos
+  Art._defs = { D, B, h: { eye, eyes, glowEye, smile, blush, star, spark, bolt, flame, snow, leaf, bubble, gear, shine, shadow } };
   Art.bossList = () => Object.keys(B);
 
   /* ---------------------------------------------------------------- ícones de elemento */

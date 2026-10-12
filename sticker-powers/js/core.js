@@ -70,6 +70,7 @@
         evolutions: 0, levelUps: 0, streak: 0, bestStreak: 0, stickersObtained: 0, totalCoinsEarned: 0
       },
       campaign: { cleared: 0 },
+      tower: { floor: 1, best: 0 },
       bosses: {},          // bossId -> maior nível de desafio vencido (0 = nunca)
       missions: {},        // missionId -> true quando a recompensa foi resgatada
       daily: { date: '', freeClaimedAt: 0, counters: {}, claimed: {} },
@@ -125,6 +126,10 @@
       Object.keys(st.stats).forEach(k => { st.stats[k] = clampInt(raw.stats[k], 0, 1e9, 0); });
     }
     if (isObj(raw.campaign)) st.campaign.cleared = clampInt(raw.campaign.cleared, 0, SP.STAGE_COUNT, 0);
+    if (isObj(raw.tower)) {
+      st.tower.best = clampInt(raw.tower.best, 0, 1e6, 0);
+      st.tower.floor = clampInt(raw.tower.floor, 1, st.tower.best + 1, 1);
+    }
     if (isObj(raw.bosses)) SP.BOSSES.forEach(b => { if (raw.bosses[b.id]) st.bosses[b.id] = clampInt(raw.bosses[b.id], 0, 99, 0); });
     if (isObj(raw.missions)) SP.MISSIONS.forEach(m => { if (raw.missions[m.id] === true) st.missions[m.id] = true; });
     if (isObj(raw.daily)) {
@@ -255,10 +260,12 @@
   /** Habilidade efetiva (estrela 3 desperta a habilidade). */
   Core.skillFor = function (id, stars) {
     const sk = SP.STICKER[id].skill;
-    if ((stars || 1) < 3) return sk;
-    const k = SP.PROG.awakenedPower;
+    const st = stars || 1;
+    if (st < 3) return sk;
+    const supreme = st >= 5;
+    const k = supreme ? SP.PROG.supremePower : SP.PROG.awakenedPower;
     return Object.assign({}, sk, {
-      name: sk.name + ' ✦', awakened: true, cost: Math.max(1, sk.cost - 1),
+      name: sk.name + (supreme ? ' ✦✦' : ' ✦'), awakened: true, supreme, cost: Math.max(1, sk.cost - 1),
       fx: sk.fx.map(f => {
         const g = Object.assign({}, f);
         if (g.p) g.p = Math.round(g.p * k * 100) / 100;
@@ -458,15 +465,19 @@
       needLevel: SP.PROG.levelCap(o.stars),
       coins: maxed ? 0 : SP.PROG.evoCoins(o.stars),
       frags: maxed ? 0 : SP.PROG.evoFrags(s.rarity, o.stars),
+      essence: maxed ? 0 : SP.PROG.evoEssence(o.stars),
       before: Core.statsFor(id, o.level, o.stars),
       after: maxed ? null : Core.statsFor(id, o.level, o.stars + 1),
       unlock: o.stars === 1 ? 'Talento elemental: ' + SP.ELEMENT[s.el].passive + ' + brilho holográfico na carta.'
-            : o.stars === 2 ? 'Habilidade Desperta: +25% de poder e custo −1 + aura animada na carta.' : ''
+            : o.stars === 2 ? 'Habilidade Desperta: +25% de poder e custo −1 + aura animada na carta.'
+            : o.stars === 3 ? 'Limite de nível 40 + moldura de cristal na carta.'
+            : o.stars === 4 ? 'Forma Suprema: habilidade com +50% de poder (em vez de +25%) + coroa de luz na carta.' : ''
     };
     info.levelOk = o.level >= info.needLevel;
     info.coinsOk = SP.state.coins >= info.coins;
     info.fragsOk = SP.state.fragments >= info.frags;
-    info.ok = !maxed && info.levelOk && info.coinsOk && info.fragsOk;
+    info.essenceOk = SP.state.essence >= info.essence;
+    info.ok = !maxed && info.levelOk && info.coinsOk && info.fragsOk && info.essenceOk;
     return info;
   };
   Core.evolve = function (id) {
@@ -476,9 +487,11 @@
     if (!info.levelOk) return { ok: false, reason: 'Precisa estar no nível ' + info.needLevel + '.' };
     if (!info.coinsOk) return { ok: false, reason: 'Moedas insuficientes.' };
     if (!info.fragsOk) return { ok: false, reason: 'Fragmentos insuficientes.' };
+    if (!info.essenceOk) return { ok: false, reason: 'Essência insuficiente. Derrote chefes ou suba a Torre Infinita.' };
     const o = SP.state.owned[id];
     SP.state.coins -= info.coins;
     SP.state.fragments -= info.frags;
+    SP.state.essence -= info.essence;
     o.stars++;
     o.xp = 0;
     SP.state.stats.evolutions++;
@@ -504,9 +517,13 @@
     const st = SP.state;
     switch (stat) {
       case 'bestRank': return Object.keys(st.owned).reduce((m, id) => Math.max(m, SP.RARITY[SP.STICKER[id].rarity].rank), 0);
-      case 'maxLevel': return Object.keys(st.owned).reduce((m, id) => Math.max(m, st.owned[id].level + (st.owned[id].stars - 1) * 0), 0);
+      case 'maxLevel': return Object.keys(st.owned).reduce((m, id) => Math.max(m, st.owned[id].level), 0);
+      case 'maxStars': return Object.keys(st.owned).reduce((m, id) => Math.max(m, st.owned[id].stars), 0);
+      case 'cleared': return st.campaign.cleared;
+      case 'towerBest': return st.tower.best;
       case 'uniqueOwned': return Core.uniqueOwned();
       case 'bossKinds': return SP.BOSSES.filter(b => st.bosses[b.id] > 0).length;
+      case 'bossKinds1': return SP.BOSSES.filter(b => !b.act && st.bosses[b.id] > 0).length;
       case 'elementsComplete': return SP.ELEMENTS.filter(e => { const p = Core.elementProgress(e.id); return p.owned === p.total; }).length;
       default: return st.stats[stat] || 0;
     }
@@ -595,14 +612,33 @@
       const s = pool[Math.floor(r() * pool.length)];
       if (picks.indexOf(s.id) < 0) picks.push(s.id);
     }
-    const stars = lvl > 20 ? 3 : lvl > 10 ? 2 : 1;
+    const stars = SP.starsForLevel(lvl);
     return picks.map(id => ({ id, level: Math.max(1, lvl - 1 + Math.floor(r() * 2)), stars }));
+  };
+
+  /* ---------------------------------------------------------------- torre infinita */
+  Core.towerSpec = function (floor) {
+    const T = SP.TOWER;
+    const level = T.levelFor(floor);
+    if (T.isBoss(floor)) {
+      const b = SP.BOSSES[(floor / 10 - 1) % SP.BOSSES.length];
+      return { floor, level, boss: { id: b.id, level } };
+    }
+    const rnd = Core.seeded(floor * 104729 + 7);
+    const maxRank = Math.min(6, 1 + Math.floor(floor / 8));
+    const pool = SP.STICKERS.filter(s => !s.bossOnly && SP.RARITY[s.rarity].rank <= maxRank);
+    const picks = [];
+    while (picks.length < 3) {
+      const s = pool[Math.floor(rnd() * pool.length)];
+      if (picks.indexOf(s.id) < 0) picks.push(s.id);
+    }
+    return { floor, level, enemies: picks.map(id => ({ id, level, stars: SP.starsForLevel(level) })) };
   };
 
   Core.bossLevel = function (bossId, tier) {
     const b = SP.BOSS[bossId];
     const base = SP.stageInfo(b.stage).level;
-    return Math.min(40, base + (tier - 1) * 4);
+    return Math.min(80, base + (tier - 1) * 4);
   };
   Core.nextBossTier = function (bossId) { return (SP.state.bosses[bossId] || 0) + 1; };
   Core.bossUnlocked = function (bossId) { return SP.state.campaign.cleared >= SP.BOSS[bossId].stage - 1; };
@@ -622,6 +658,7 @@
       // desistir conta como derrota e não dá recompensa nenhuma
       st.stats.battlesLost++;
       st.stats.streak = 0;
+      if (b.kind === 'tower') st.tower.floor = SP.TOWER.checkpoint(st.tower.floor);
       return rw;
     }
     if (b.win) {
@@ -643,6 +680,16 @@
           rw.coins += r2.coins; rw.fragments += r2.fragments; rw.essence += r2.essence;
           if (r2.sticker) rw.sticker = r2.sticker;
         }
+      } else if (b.kind === 'tower') {
+        const T = SP.TOWER, f = st.tower.floor;
+        const r = T.rewards(f);
+        rw.coins = r.coins; rw.fragments = r.fragments; rw.xp = r.xp; rw.floor = f;
+        if (T.isBoss(f)) {
+          const bb = T.bossBonus(f);
+          rw.essence += bb.essence; rw.tokens = bb.tokens;
+        }
+        st.tower.best = Math.max(st.tower.best, f);
+        st.tower.floor = f + 1;
       } else if (b.kind === 'boss') {
         const r2 = Core._bossWin(b.bossId, b.tier);
         rw.coins = r2.coins; rw.fragments = r2.fragments; rw.essence = r2.essence; rw.xp = 40 + b.tier * 25;
@@ -658,6 +705,7 @@
       // consolação: um pouco de XP para não travar a progressão
       rw.xp = b.kind === 'stage' ? Math.round(SP.stageInfo(b.stage).xp * 0.4) : 15;
       rw.coins = 15;
+      if (b.kind === 'tower') { rw.fellTo = SP.TOWER.checkpoint(st.tower.floor); st.tower.floor = rw.fellTo; }
     }
     Core.addCoins(rw.coins);
     st.fragments += rw.fragments;

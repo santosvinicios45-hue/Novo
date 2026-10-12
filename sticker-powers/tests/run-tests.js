@@ -12,7 +12,7 @@ globalThis.localStorage = {
   setItem: (k, v) => { mem[k] = String(v); },
   removeItem: k => { delete mem[k]; }
 };
-['data.js', 'core.js', 'battle.js', 'art.js'].forEach(f => require(path.join(__dirname, '..', 'js', f)));
+['data.js', 'core.js', 'battle.js', 'art.js', 'art2.js'].forEach(f => require(path.join(__dirname, '..', 'js', f)));
 const SP = globalThis.SP;
 const Core = SP.Core, Battle = SP.Battle;
 
@@ -61,8 +61,9 @@ test('as artes geradas são diferentes entre si', () => {
   const arts = SP.STICKERS.map(s => strip(SP.Art.sticker(s.id)));
   eq(new Set(arts).size, arts.length, 'existem artes idênticas');
 });
-test('4 chefes, cada um com arte e sticker exclusivo', () => {
-  eq(SP.BOSSES.length, 4);
+test('8 chefes (4 por ato), cada um com arte e sticker exclusivo', () => {
+  eq(SP.BOSSES.length, 8);
+  eq(SP.BOSSES.filter(b => b.act === 2).length, 4);
   SP.BOSSES.forEach(b => { assert(SP.Art.boss(b.id).length > 500); assert(SP.STICKER[b.reward].bossOnly === b.id); });
 });
 
@@ -406,14 +407,15 @@ test('mil batalhas simuladas terminam sem erro, com vitórias e derrotas', () =>
   }
   assert(wins > 200 && wins < 800, 'distribuição estranha: ' + wins + '/' + total);
 });
-test('as 4 lutas de chefe podem ser vencidas por uma equipe forte e perdidas por uma fraca', () => {
+test('as 8 lutas de chefe podem ser vencidas por uma equipe forte e perdidas por uma fraca', () => {
   fresh();
   SP.BOSSES.forEach(bs => {
     const L = SP.stageInfo(bs.stage).level;
-    const st = L > 20 ? 3 : L > 10 ? 2 : 1;
+    const st = SP.starsForLevel(L);
+    const strongTeam = bs.act === 2 ? ['frost_queen', 'void_king', 'serafim_aurora'] : ['volt_dragon', 'serafim_aurora', 'terra_golem'];
     let strongWins = 0, weakWins = 0;
     for (let i = 0; i < 40; i++) {
-      const s = Battle.create({ players: ['volt_dragon', 'serafim_aurora', 'terra_golem'].map(id => ({ id, level: L + 2, stars: st })), boss: { id: bs.id, level: L }, rng: seeded(i + 1) });
+      const s = Battle.create({ players: strongTeam.map(id => ({ id, level: L + 2, stars: st })), boss: { id: bs.id, level: L }, rng: seeded(i + 1) });
       Battle.simulate(s); if (s.winner === 'player') strongWins++;
       const w = Battle.create({ players: [{ id: 'brasinha', level: Math.max(1, L - 5), stars: 1 }], boss: { id: bs.id, level: L }, rng: seeded(i + 1) });
       Battle.simulate(w); if (w.winner === 'player') weakWins++;
@@ -509,7 +511,7 @@ test('dados inválidos são corrigidos (sanitize)', () => {
   const st = Core.sanitize({ coins: -50, fragments: 'abc', owned: { brasinha: { level: 999, stars: 9, xp: -3 }, naoexiste: { level: 1 } }, team: ['naoexiste', 'brasinha', 'brasinha'], settings: { volume: 7, battleSpeed: 99 } });
   eq(st.coins, 0); eq(st.fragments, 0);
   assert(!st.owned.naoexiste);
-  eq(st.owned.brasinha.stars, 3); eq(st.owned.brasinha.level, 30); eq(st.owned.brasinha.xp, 0);
+  eq(st.owned.brasinha.stars, 5); eq(st.owned.brasinha.level, 50); eq(st.owned.brasinha.xp, 0);
   eq(st.team.length, 1);
   eq(st.settings.volume, 1); eq(st.settings.battleSpeed, 1);
 });
@@ -523,6 +525,63 @@ test('exportar/importar e reiniciar', () => {
   let threw = false;
   try { Core.importSave('lixo'); } catch (e) { threw = true; }
   assert(threw);
+});
+
+/* ------------------------------------------------------------------ Ato II e pós-jogo */
+console.log('\nAto II e Torre Infinita');
+test('40 fases: todas as fases normais têm inimigos válidos e os níveis só sobem', () => {
+  eq(SP.STAGE_COUNT, 40);
+  let last = 0;
+  for (let n = 1; n <= SP.STAGE_COUNT; n++) {
+    const info = SP.stageInfo(n);
+    assert(info.level >= last, 'nível caiu na fase ' + n); last = info.level;
+    if (info.boss) eq(info.boss.stage, n); else { const e = Core.stageEnemies(n); assert(e && e.length === 3 || n <= 2, 'fase ' + n); e.forEach(x => assert(SP.STICKER[x.id], x.id)); }
+  }
+  eq(SP.stageInfo(40).level, 50);
+});
+test('evoluir até 5 estrelas: estrelas 4 e 5 custam Essência; estrela 5 = Forma Suprema', () => {
+  fresh();
+  SP.state.coins = 1e6; SP.state.fragments = 1e5; SP.state.essence = 0;
+  for (let k = 1; k < 3; k++) { Core.grantXp('brasinha', 1e7); assert(Core.evolve('brasinha').ok, 'evolução ' + k); }
+  Core.grantXp('brasinha', 1e7);
+  const r = Core.evolve('brasinha');
+  assert(!r.ok && /Essência/.test(r.reason), 'estrela 4 sem essência');
+  SP.state.essence = 6;
+  assert(Core.evolve('brasinha').ok); eq(SP.state.essence, 4);
+  Core.grantXp('brasinha', 1e7); eq(SP.state.owned.brasinha.level, 40);
+  assert(Core.evolve('brasinha').ok); eq(SP.state.essence, 0);
+  eq(SP.state.owned.brasinha.stars, 5);
+  Core.grantXp('brasinha', 1e7); eq(SP.state.owned.brasinha.level, 50);
+  assert(Core.evoInfo('brasinha').maxed);
+  const s5 = Core.skillFor('brasinha', 5), s1 = Core.skillFor('brasinha', 1);
+  assert(s5.supreme); near(s5.fx[0].p, s1.fx[0].p * SP.PROG.supremePower, 0.011);
+  eq(Core.missionValue('maxStars'), 5);
+});
+test('Torre: vitória sobe de andar e grava recorde; derrota volta ao checkpoint', () => {
+  fresh();
+  eq(SP.state.tower.floor, 1);
+  for (let i = 0; i < 12; i++) Core.applyBattleResult({ kind: 'tower', team: ['brasinha'], win: true });
+  eq(SP.state.tower.floor, 13); eq(SP.state.tower.best, 12);
+  const rw = Core.applyBattleResult({ kind: 'tower', team: ['brasinha'], win: false });
+  eq(rw.fellTo, 11); eq(SP.state.tower.floor, 11); eq(SP.state.tower.best, 12);
+  Core.applyBattleResult({ kind: 'tower', team: ['brasinha'], win: false, fled: true });
+  eq(SP.state.tower.floor, 11);
+});
+test('Torre: andar 10 é chefe e dá Essência; inimigos ficam mais fortes', () => {
+  fresh();
+  assert(Core.towerSpec(10).boss && !Core.towerSpec(9).boss);
+  assert(Core.towerSpec(50).level > Core.towerSpec(5).level);
+  SP.state.tower.floor = 10; SP.state.tower.best = 9;
+  const e = SP.state.essence;
+  const rw = Core.applyBattleResult({ kind: 'tower', team: ['brasinha'], win: true });
+  assert(rw.essence >= 1 && SP.state.essence === e + rw.essence);
+  for (let f = 1; f <= 120; f++) { const t = Core.towerSpec(f); if (!t.boss) t.enemies.forEach(x => assert(!SP.STICKER[x.id].bossOnly)); }
+});
+test('save antigo (sem torre, 3 estrelas) carrega normalmente', () => {
+  const st = Core.sanitize({ coins: 10, owned: { brasinha: { level: 30, stars: 3 } }, campaign: { cleared: 20 } });
+  eq(st.tower.floor, 1); eq(st.campaign.cleared, 20); eq(st.owned.brasinha.level, 30);
+  const t2 = Core.sanitize({ tower: { floor: 999, best: 15 } });
+  eq(t2.tower.floor, 16, 'andar além do recorde+1 é corrigido');
 });
 
 /* ------------------------------------------------------------------ economia */

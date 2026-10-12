@@ -13,18 +13,20 @@
       <div class="tabs">
         <button class="tab ${tab === 'campaign' ? 'on' : ''}" data-t="campaign">🗺️ Campanha</button>
         <button class="tab ${tab === 'bosses' ? 'on' : ''}" data-t="bosses">👑 Chefes</button>
+        <button class="tab ${tab === 'tower' ? 'on' : ''}" data-t="tower">🗼 Torre Infinita</button>
         <button class="tab ${tab === 'quick' ? 'on' : ''}" data-t="quick">⚡ Batalha Rápida</button>
       </div><div id="tabBody"></div></div>`;
     UI.$$('.tab', el).forEach(t => t.addEventListener('click', () => { UI.sfx('click'); UI.currentParams = { tab: t.dataset.t }; UI.render('battles', { tab: t.dataset.t }); }));
     const body = UI.$('#tabBody', el);
     if (tab === 'campaign') campaign(body);
     else if (tab === 'bosses') bosses(body);
+    else if (tab === 'tower') tower(body);
     else quick(body);
   };
 
   function campaign(body) {
     const cleared = SP.state.campaign.cleared;
-    body.innerHTML = SP.REGIONS.map(r => `<div class="region" style="background:linear-gradient(135deg, ${r.bg[0]}, ${r.bg[1]})">
+    body.innerHTML = SP.REGIONS.map((r, i) => (i === 0 || r.act !== SP.REGIONS[i - 1].act ? `<h2 class="section act-title">${r.act === 1 ? 'Ato I — O Despertar' : 'Ato II — O Devorador de Poderes'}${r.act === 2 && cleared < SP.ACT1_END ? ' <span class="small-txt muted">🔒 vença a fase 20 para liberar</span>' : ''}</h2>` : '') + `<div class="region ${r.act === 2 && cleared < SP.ACT1_END ? 'act-locked' : ''}" style="background:linear-gradient(135deg, ${r.bg[0]}, ${r.bg[1]})">
       <h4>${UI.esc(r.name)} <span class="small-txt muted">· Fases ${r.stages[0]}–${r.stages[1]}</span></h4>
       <div class="stage-path">${range(r.stages[0], r.stages[1]).map(n => {
         const info = SP.stageInfo(n);
@@ -43,13 +45,14 @@
   const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 
   function bosses(body) {
-    body.innerHTML = `<div class="boss-list">${SP.BOSSES.map(b => {
+    body.innerHTML = `<div class="boss-list">${SP.BOSSES.map((b, bi) => {
       const un = Core.bossUnlocked(b.id);
       const tier = Core.nextBossTier(b.id);
       const best = SP.state.bosses[b.id] || 0;
       const rw = SP.bossTierRewards(tier);
       const owned = SP.state.owned[b.reward];
-      return `<div class="panel boss-card ${un ? '' : 'locked'}" data-b="${b.id}">
+      const head = bi === 0 || !!b.act !== !!SP.BOSSES[bi - 1].act ? `<h2 class="section" style="grid-column:1/-1;margin-bottom:0">${b.act ? 'Ato II' : 'Ato I'}</h2>` : '';
+      return head + `<div class="panel boss-card ${un ? '' : 'locked'}" data-b="${b.id}">
         <div class="b-art">${Art.boss(b.id)}</div>
         <div class="b-info"><b style="font-size:17px">${UI.esc(b.name)}</b> <span class="badge">${Art.elementIcon(b.el, 13)} ${UI.elName(b.el)}</span>
         <div class="small-txt muted">${UI.esc(b.title)}</div>
@@ -66,6 +69,33 @@
       const tier = Core.nextBossTier(id);
       UI.bossIntro(id, Core.bossLevel(id, tier), () => UI.go('team', { kind: 'boss', bossId: id, tier }));
     }));
+  }
+
+  function tower(body) {
+    const T = SP.TOWER, tw = SP.state.tower;
+    const spec = Core.towerSpec(tw.floor);
+    const rw = T.rewards(tw.floor);
+    const isBoss = T.isBoss(tw.floor);
+    const floors = [];
+    for (let f = tw.floor + 4; f >= Math.max(1, tw.floor - 2); f--) floors.push(f);
+    body.innerHTML = `<div class="tower-wrap">
+      <div class="panel tower-info">
+        <h3 style="font-family:var(--font-display);margin:0">Torre Infinita</h3>
+        <p class="muted small-txt">Andares sem fim, cada vez mais fortes. A cada 10 andares, um chefe guarda a passagem. Se perder, você volta ao último checkpoint (andares 1, 11, 21...). Seu recorde fica salvo.</p>
+        <div class="stats-grid" style="margin:10px 0"><div class="panel"><b>${tw.floor}</b><span class="small-txt muted">Andar atual</span></div><div class="panel"><b>${tw.best}</b><span class="small-txt muted">Recorde</span></div><div class="panel"><b>${T.checkpoint(tw.floor)}</b><span class="small-txt muted">Checkpoint</span></div></div>
+        <div class="small-txt">Próximo: <b>${isBoss ? '👑 CHEFE ' + UI.esc(SP.BOSS[spec.boss.id].name) : 'Andar ' + tw.floor}</b> · inimigos nível <b>${spec.level}</b></div>
+        <div class="small-txt" style="color:var(--gold);margin-top:4px">Vitória: ${rw.coins} moedas · ${rw.fragments} fragmentos · ${rw.xp} XP${isBoss ? ' · ' + Core.rewardText(T.bossBonus(tw.floor)) : ''}</div>
+        <div class="vs-preview" style="margin-top:12px">${spec.boss ? `<div style="width:110px;height:110px;border-radius:16px;overflow:hidden;border:3px solid #ff2e7e">${Art.boss(spec.boss.id)}</div>` : spec.enemies.map(enemyMini).join('')}</div>
+        <div class="row center" style="margin-top:14px"><button class="btn big ${isBoss ? 'red' : 'gold'}" id="twGo">Subir para o andar ${tw.floor}</button></div>
+      </div>
+      <div class="tower-col">${floors.map(f => `<div class="tower-floor ${f === tw.floor ? 'cur' : f < tw.floor ? 'done' : ''} ${T.isBoss(f) ? 'boss' : ''}">${T.isBoss(f) ? '👑 ' : ''}Andar ${f}${f === tw.floor ? ' ◀ você' : f <= tw.best ? ' ✓' : ''}</div>`).join('')}</div>
+    </div>`;
+    UI.$('#twGo', body).addEventListener('click', () => {
+      UI.sfx('click');
+      const cfg = { kind: 'tower', floor: tw.floor };
+      if (isBoss) UI.bossIntro(spec.boss.id, spec.level, () => UI.go('team', cfg));
+      else UI.go('team', cfg);
+    });
   }
 
   function quick(body) {
@@ -136,6 +166,10 @@
       return { enemies: Core.stageEnemies(cfg.stage) };
     }
     if (cfg.kind === 'boss') return { boss: { id: cfg.bossId, level: Core.bossLevel(cfg.bossId, cfg.tier) } };
+    if (cfg.kind === 'tower') {
+      const t = Core.towerSpec(cfg.floor);
+      return t.boss ? { boss: t.boss } : { enemies: t.enemies };
+    }
     return { enemies: cfg.enemies };
   }
 
@@ -144,7 +178,7 @@
     let team = st.team.filter(id => st.owned[id]).slice(0, 3);
     const foes = enemySpecs(cfg);
     const foeEls = foes.boss ? [SP.BOSS[foes.boss.id].el] : foes.enemies.map(e => SP.STICKER[e.id].el);
-    const title = cfg.kind === 'stage' ? 'Fase ' + cfg.stage : cfg.kind === 'boss' ? SP.BOSS[cfg.bossId].name + ' (nível ' + cfg.tier + ')' : 'Batalha Rápida';
+    const title = cfg.kind === 'stage' ? 'Fase ' + cfg.stage : cfg.kind === 'boss' ? SP.BOSS[cfg.bossId].name + ' (nível ' + cfg.tier + ')' : cfg.kind === 'tower' ? 'Torre Infinita — andar ' + cfg.floor : 'Batalha Rápida';
     el.innerHTML = `<div class="wrap">
       <div class="panel" style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><b>Adversário: ${UI.esc(title)}</b>
         <span class="small-txt muted">Elementos inimigos: ${foeEls.map(e => Art.elementIcon(e, 16)).join(' ')}</span></div>
@@ -211,7 +245,7 @@
     const b = Battle.create(Object.assign({ players }, foes));
     const token = {};
     Object.assign(BT, { active: true, b, cfg, el, token, waiting: null });
-    const region = cfg.kind === 'stage' ? SP.stageInfo(cfg.stage).region : SP.REGIONS[(cfg.tier || 1) % SP.REGIONS.length];
+    const region = cfg.kind === 'stage' ? SP.stageInfo(cfg.stage).region : SP.REGIONS[((cfg.tier || 1) + (cfg.floor || 0)) % SP.REGIONS.length];
     const bossCol = foes.boss ? SP.ELEMENT[SP.BOSS[foes.boss.id].el].c1 : null;
     el.innerHTML = `<div class="battle">
       <div class="battle-bg" style="background:radial-gradient(ellipse at 50% 20%, ${bossCol || region.bg[1]}66, transparent 60%), linear-gradient(180deg, ${region.bg[0]}, #05020c 55%, ${region.bg[0]})"></div>
@@ -381,11 +415,11 @@
   }
 
   UI.Battle.confirmFlee = function () {
-    UI.confirm('Desistir desta batalha? Ela contará como derrota e você não receberá recompensas.', () => {
+    UI.confirm('Desistir desta batalha? Ela contará como derrota e você não receberá recompensas.' + (BT.cfg.kind === 'tower' ? ' Na Torre, você volta ao último checkpoint.' : ''), () => {
       const cfg = BT.cfg;
       BT.token = null; BT.active = false;
       if (BT.waiting) BT.waiting = null;
-      Core.applyBattleResult({ kind: cfg.kind, stage: cfg.stage, bossId: cfg.bossId, tier: cfg.tier, team: cfg.team, win: false, fled: true, skillsUsed: BT.b.stats.skillsUsed, advantageHits: BT.b.stats.advantageHits });
+      Core.applyBattleResult({ kind: cfg.kind, stage: cfg.stage, bossId: cfg.bossId, tier: cfg.tier, floor: cfg.floor, team: cfg.team, win: false, fled: true, skillsUsed: BT.b.stats.skillsUsed, advantageHits: BT.b.stats.advantageHits });
       UI.changed();
       SP.FX.clear();
       UI.back();
@@ -531,7 +565,7 @@
     const win = b.winner === 'player';
     const rw = Core.applyBattleResult({ kind: cfg.kind, stage: cfg.stage, bossId: cfg.bossId, tier: cfg.tier, team: cfg.team, win, skillsUsed: b.stats.skillsUsed, advantageHits: b.stats.advantageHits });
     UI.changed();
-    const isBoss = cfg.kind === 'boss' || (cfg.kind === 'stage' && SP.stageInfo(cfg.stage).boss);
+    const isBoss = cfg.kind === 'boss' || (cfg.kind === 'stage' && SP.stageInfo(cfg.stage).boss) || (cfg.kind === 'tower' && SP.TOWER.isBoss(cfg.floor));
     if (win) {
       UI.sfx('victory');
       SP.FX.burst(innerWidth / 2, innerHeight * 0.3, { style: 'confetti', count: 120, speed: 520, life: 1.6 });
@@ -543,9 +577,10 @@
     if (rw.essence) items.push(`${Art.icon('essence', 22)} +${rw.essence}`);
     if (rw.xp) items.push(`⭐ +${rw.xp} XP cada`);
     if (rw.tokens && rw.tokens.premium) items.push('🎟️ +1 Pacote Premium');
-    const bossName = cfg.kind === 'boss' ? SP.BOSS[cfg.bossId].name : isBoss ? isBoss.name : null;
+    const bossName = cfg.kind === 'boss' ? SP.BOSS[cfg.bossId].name : cfg.kind === 'tower' && isBoss ? SP.BOSS[Core.towerSpec(cfg.floor).boss.id].name : isBoss ? isBoss.name : null;
     const m = UI.modal(`<div class="result">
       <div class="r-title ${win ? 'win' : 'lose'}">${win ? 'VITÓRIA!' : b.timeout ? 'TEMPO ESGOTADO' : 'DERROTA'}</div>
+      ${cfg.kind === 'tower' ? `<p><b>${win ? '🗼 Andar ' + cfg.floor + ' conquistado!' + (cfg.floor >= SP.state.tower.best && cfg.floor > 1 ? ' Novo recorde!' : '') : '🗼 Você voltou para o andar ' + rw.fellTo + '.'}</b></p>` : ''}
       <p class="muted">${win ? (bossName ? 'Você derrotou ' + UI.esc(bossName) + '!' : rw.firstClear ? 'Fase concluída pela primeira vez!' : 'Belo combate!') : 'Não desista! Treine e evolua seus stickers, ou tente outra equipe com vantagem elemental.'}</p>
       <div class="reward-list">${items.map((x, i) => `<div class="reward" style="animation-delay:${i * 0.12}s">${x}</div>`).join('')}</div>
       ${rw.levelUps.length ? `<div class="panel small-txt" style="margin:8px auto;max-width:420px">${rw.levelUps.map(l => `⬆ <b>${UI.esc(SP.STICKER[l.id].name)}</b> subiu para o nível ${l.to}!`).join('<br>')}</div>` : ''}
@@ -566,6 +601,11 @@
       const t = Core.nextBossTier(cfg.bossId);
       btns.push([win ? 'Desafio nível ' + t : 'Tentar de novo', 'red', () => UI.bossIntro(cfg.bossId, Core.bossLevel(cfg.bossId, t), () => UI.go('team', { kind: 'boss', bossId: cfg.bossId, tier: t }, { replace: true }))]);
       btns.push(['Chefes', 'ghost', () => UI.go('battles', { tab: 'bosses' }, { replace: true })]);
+    } else if (cfg.kind === 'tower') {
+      const f = SP.state.tower.floor;
+      const go = () => { const sp = Core.towerSpec(f); const c = { kind: 'tower', floor: f }; if (sp.boss) UI.bossIntro(sp.boss.id, sp.level, () => UI.go('team', c, { replace: true })); else UI.go('team', c, { replace: true }); };
+      btns.push([win ? 'Próximo andar (' + f + ') ▲' : 'Tentar do andar ' + f, win ? 'gold' : '', go]);
+      btns.push(['Torre', 'ghost', () => UI.go('battles', { tab: 'tower' }, { replace: true })]);
     } else {
       btns.push(['Nova batalha rápida', '', () => UI.go('team', { kind: 'quick', enemies: Core.quickEnemies(SP.state.team) }, { replace: true })]);
       btns.push(['Voltar', 'ghost', () => UI.go('battles', { tab: 'quick' }, { replace: true })]);

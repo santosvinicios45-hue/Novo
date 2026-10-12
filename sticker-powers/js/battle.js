@@ -28,7 +28,7 @@
 
   function makeBoss(bossId, level, idx) {
     const b = SP.BOSS[bossId];
-    const stars = level > 20 ? 3 : level > 10 ? 2 : 1;
+    const stars = SP.starsForLevel(level);
     const B = SP.BASE_STATS, rm = SP.BOSS_BASE_MULT;
     const m = (1 + SP.PROG.levelGrowth * (level - 1)) * (1 + SP.PROG.starGrowth * (stars - 1));
     const hp = Math.round(B.hp * rm * m * b.hp);
@@ -244,6 +244,10 @@
     if (to === 'self') return [actor];
     if (to === 'allies') return Battle.alive(b, actor.side);
     if (to === 'enemies') return Battle.alive(b, foeSide(actor.side));
+    if (to === 'lowestAlly') {
+      const al = Battle.alive(b, actor.side).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp);
+      return al.length ? [al[0]] : [];
+    }
     return T;
   }
 

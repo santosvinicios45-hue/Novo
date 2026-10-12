@@ -56,11 +56,12 @@
           </div>
           <div class="panel" style="background:rgba(0,0,0,.25);margin-top:10px">
             <b>✨ Evoluir</b> ${evo.maxed ? '<span class="badge" style="background:#ffc21a;color:#000">EVOLUÇÃO MÁXIMA</span>' : `<span class="small-txt muted">→ ${o.stars + 1} estrelas</span>`}
-            ${evo.maxed ? '<div class="small-txt muted" style="margin-top:6px">Este sticker já despertou todo o seu poder: talento elemental e habilidade desperta ativos.</div>' : `
+            ${evo.maxed ? '<div class="small-txt muted" style="margin-top:6px">Este sticker alcançou a Forma Suprema: talento elemental ativo e habilidade com +50% de poder.</div>' : `
             <div class="cost-line small-txt">
               <span class="${evo.levelOk ? 'ok' : 'no'}">${evo.levelOk ? '✓' : '✗'} Nível ${evo.needLevel}</span>
               <span class="${evo.coinsOk ? 'ok' : 'no'}">${evo.coinsOk ? '✓' : '✗'} ${Art.icon('coin', 14)} ${evo.coins}</span>
               <span class="${evo.fragsOk ? 'ok' : 'no'}">${evo.fragsOk ? '✓' : '✗'} ${Art.icon('frag', 14)} ${evo.frags} fragmentos</span>
+              ${evo.essence ? `<span class="${evo.essenceOk ? 'ok' : 'no'}">${evo.essenceOk ? '✓' : '✗'} ${Art.icon('essence', 14)} ${evo.essence} essência</span>` : ''}
             </div>
             <div class="small-txt">Benefícios: atributos +${Math.round(SP.PROG.starGrowth * 100)}% (Vida ${evo.before.hp}→<b style="color:var(--good)">${evo.after.hp}</b>, Ataque ${evo.before.atk}→<b style="color:var(--good)">${evo.after.atk}</b>, Defesa ${evo.before.def}→<b style="color:var(--good)">${evo.after.def}</b>), limite de nível ${cap}→${SP.PROG.levelCap(o.stars + 1)}.</div>
             <div class="small-txt" style="color:#ffe14d;margin-top:4px">Desbloqueia: ${evo.unlock}</div>
@@ -201,7 +202,7 @@
         <h2 class="section">Recordes</h2>
         <div class="stats-grid">
           ${[['Vitórias', S.battlesWon], ['Derrotas', S.battlesLost], ['Melhor sequência', S.bestStreak], ['Pacotes abertos', S.packsOpened], ['Stickers recebidos', S.stickersObtained],
-            ['Coleção', Core.uniqueOwned() + '/' + SP.STICKERS.length], ['Fases vencidas', st.campaign.cleared + '/' + SP.STAGE_COUNT], ['Chefes derrotados', Core.missionValue('bossKinds') + '/4'],
+            ['Coleção', Core.uniqueOwned() + '/' + SP.STICKERS.length], ['Fases vencidas', st.campaign.cleared + '/' + SP.STAGE_COUNT], ['Chefes derrotados', Core.missionValue('bossKinds') + '/' + SP.BOSSES.length], ['Recorde da Torre', 'Andar ' + st.tower.best],
             ['Evoluções', S.evolutions], ['Habilidades usadas', S.skillsUsed], ['Golpes com vantagem', S.advantageHits], ['Moedas ganhas', UI.fmt(S.totalCoinsEarned)]]
             .map(([l, v]) => `<div class="panel"><b>${v}</b><span class="small-txt muted">${l}</span></div>`).join('')}
         </div>
