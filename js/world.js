@@ -304,7 +304,7 @@ class Player extends Ent {
       }
       const sp = this.speed * (G.flags.velorio ? 0.75 : 1);
       World.moveBox(this, ax * sp * dt, ay * sp * dt);
-      this.anim += dt * 7.5;
+      this.anim += dt * 6.5;
       this.stepT -= dt; if (this.stepT <= 0) { this.stepT = 0.33; Audio2.sfx('step'); }
     } else this.anim = 0;
     this.blinkT -= dt; if (this.blinkT < -0.12) this.blinkT = U.rand(2, 5);
