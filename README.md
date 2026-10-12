@@ -1,3 +1,5 @@
+> **Novo neste repositório:** [STICKER POWERS: O Despertar dos Poderes](sticker-powers/README.md), um jogo de stickers colecionáveis com batalhas. Para jogar, abra `sticker-powers/index.html`.
+
 # V — O Homem Que Acordou Grande Demais (o jogo)
 
 Jogo de aventura em pixel art baseado no romance *V — O Homem Que Acordou Grande Demais*.
