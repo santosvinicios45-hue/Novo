@@ -30,7 +30,9 @@
 
   function campaign(body) {
     const cleared = SP.state.campaign.cleared;
-    body.innerHTML = SP.REGIONS.map((r, i) => (i === 0 || r.act !== SP.REGIONS[i - 1].act ? `<h2 class="section act-title">${r.act === 1 ? 'Ato I — O Despertar' : 'Ato II — O Devorador de Poderes'}${r.act === 2 && cleared < SP.ACT1_END ? ' <span class="small-txt muted">🔒 vença a fase 20 para liberar</span>' : ''}</h2>` : '') + `<div class="region ${r.act === 2 && cleared < SP.ACT1_END ? 'act-locked' : ''}" style="background:linear-gradient(135deg, ${r.bg[0]}, ${r.bg[1]})">
+    const actStart = { 1: 0, 2: SP.ACT1_END, 3: SP.ACT2_END };
+    const locked = act => cleared < actStart[act];
+    body.innerHTML = SP.REGIONS.map((r, i) => (i === 0 || r.act !== SP.REGIONS[i - 1].act ? `<h2 class="section act-title">${SP.ACTS[r.act]}${locked(r.act) ? ` <span class="small-txt muted">🔒 vença a fase ${actStart[r.act]} para liberar</span>` : ''}</h2>` : '') + `<div class="region ${locked(r.act) ? 'act-locked' : ''}" style="background:linear-gradient(135deg, ${r.bg[0]}, ${r.bg[1]})">
       <h4>${UI.esc(r.name)} <span class="small-txt muted">· Fases ${r.stages[0]}–${r.stages[1]}</span></h4>
       <div class="stage-path">${range(r.stages[0], r.stages[1]).map(n => {
         const info = SP.stageInfo(n);
@@ -112,8 +114,8 @@
     const cl = SP.state.nightmare.cleared;
     body.innerHTML = `<div class="panel night-head"><h3 style="margin:0;font-family:var(--font-display)">😈 Modo Pesadelo</h3>
       <p class="small-txt muted">As 40 fases de novo, com inimigos Nv ${SP.NIGHTMARE.levelFor(1)}–${SP.NIGHTMARE.levelFor(40)} que lutam com força de Mítico e uma ou duas regras especiais. A 1ª vitória em cada fase dá cristais em dobro. Use os <b>💠 Cristais</b> para comprar molduras em Melhorias.</p>
-      <div class="row"><span class="badge">Vencidas: ${cl}/${SP.STAGE_COUNT}</span><span class="badge">💠 ${SP.state.crystals} cristais</span></div></div>
-      ${SP.REGIONS.map(r => `<div class="region night" style="background:linear-gradient(135deg, #12030a, ${r.bg[1]}88)">
+      <div class="row"><span class="badge">Vencidas: ${cl}/${SP.ACT2_END}</span><span class="badge">💠 ${SP.state.crystals} cristais</span></div></div>
+      ${SP.REGIONS.filter(r => r.act <= 2).map(r => `<div class="region night" style="background:linear-gradient(135deg, #12030a, ${r.bg[1]}88)">
         <h4>${UI.esc(r.name)} <span class="small-txt muted">· Pesadelo ${r.stages[0]}–${r.stages[1]}</span></h4>
         <div class="stage-path">${range(r.stages[0], r.stages[1]).map(n => {
           const st = n <= cl ? 'cleared' : n === cl + 1 ? 'next' : 'locked';
@@ -721,7 +723,7 @@
       btns.push([win ? 'Repetir fase' : 'Tentar de novo', '', () => UI.go('team', { kind: 'stage', stage: cfg.stage }, { replace: true })]);
       btns.push(['Mapa', 'ghost', () => UI.go('battles', { tab: 'campaign' }, { replace: true })]);
     } else if (cfg.kind === 'nightmare') {
-      if (win && cfg.stage < SP.STAGE_COUNT) btns.push(['Próximo pesadelo ▶', 'red', () => { UI.go('battles', { tab: 'nightmare' }, { replace: true }); UI.openNightmare(cfg.stage + 1); }]);
+      if (win && cfg.stage < SP.ACT2_END) btns.push(['Próximo pesadelo ▶', 'red', () => { UI.go('battles', { tab: 'nightmare' }, { replace: true }); UI.openNightmare(cfg.stage + 1); }]);
       btns.push([win ? 'Repetir' : 'Tentar de novo', '', () => UI.go('team', { kind: 'nightmare', stage: cfg.stage }, { replace: true })]);
       btns.push(['Pesadelo', 'ghost', () => UI.go('battles', { tab: 'nightmare' }, { replace: true })]);
     } else if (cfg.kind === 'boss') {

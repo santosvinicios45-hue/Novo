@@ -404,7 +404,91 @@
       title: 'O Último Poder',
       story: 'Quando o Devorador foi derrotado, todos os poderes que ele havia engolido voltaram ao mundo — menos um. Este escolheu ficar com você.',
       skill: { name: 'Absorver Poderes', cost: 4, target: 'allEnemies', desc: 'Remove os efeitos positivos dos inimigos, causa 140% de dano em todos e rouba 1 de energia de cada.',
-        fx: [{ k: 'dispel' }, { k: 'dmg', p: 1.4 }, { k: 'energy', n: -1, steal: true }] } }
+        fx: [{ k: 'dispel' }, { k: 'dmg', p: 1.4 }, { k: 'energy', n: -1, steal: true }] } },
+    // ----------------------------------------------------------- ATO III: NOVOS STICKERS DE PACOTE
+    { id: 'nuvenzinha', name: 'Nuvenzinha', el: 'wind', rarity: 'common', role: 'support', en: 4,
+      title: 'Nuvem de Estimação',
+      story: 'Uma nuvem pequena demais para chover, que resolveu seguir as pessoas tristes e fazer sombra nos dias quentes. Às vezes solta uma garoa de alegria.',
+      skill: { name: 'Garoa Fresca', cost: 2, target: 'ally', desc: 'Cura um aliado em 20% e dá Esquiva a ele.',
+        fx: [{ k: 'heal', pct: 0.2 }, { k: 'status', s: 'dodge', t: 3 }] } },
+    { id: 'tartaruga_ima', name: 'Tartaruga Ímã', el: 'metal', rarity: 'common', role: 'tank', en: 4,
+      title: 'Casco Magnético',
+      story: 'Seu casco atrai tudo que é de metal: moedas, chaves, panelas. Ela não liga. Anda devagar, carregando a cidade inteira nas costas.',
+      skill: { name: 'Casco Atrativo', cost: 2, target: 'self', desc: 'Ganha escudo de 25% e provoca os inimigos por 2 turnos.',
+        fx: [{ k: 'shield', pct: 0.25 }, { k: 'status', s: 'taunt', t: 2 }] } },
+    { id: 'coruja_crepuscular', name: 'Coruja Crepuscular', el: 'dark', rarity: 'uncommon', role: 'speed', en: 4,
+      title: 'Vigia do Fim da Tarde',
+      story: 'Acorda exatamente quando o sol se põe e conhece o nome de cada sombra da floresta. Seus olhos enxergam o que as pessoas tentam esconder.',
+      skill: { name: 'Voo Silencioso', cost: 2, target: 'enemy', desc: '115% de dano e deixa o alvo lento por 2 turnos.',
+        fx: [{ k: 'dmg', p: 1.15 }, { k: 'status', s: 'slow', t: 2 }] } },
+    { id: 'polvo_tinteiro', name: 'Polvo Tinteiro', el: 'water', rarity: 'uncommon', role: 'balanced', en: 4,
+      title: 'Escritor das Marés',
+      story: 'Escreve poemas na areia com a própria tinta, e a maré apaga tudo toda noite. Ele não se importa: diz que o importante é escrever.',
+      skill: { name: 'Nuvem de Tinta', cost: 3, target: 'allEnemies', desc: '60% de dano em todos, com 40% de chance de enfraquecer cada um.',
+        fx: [{ k: 'dmg', p: 0.6 }, { k: 'status', s: 'weaken', t: 2, chance: 0.4 }] } },
+    { id: 'golem_cristal', name: 'Golem de Cristal', el: 'ice', rarity: 'rare', role: 'tank', en: 5,
+      title: 'Sentinela Prismático',
+      story: 'Feito de gelo tão antigo que virou cristal. Quando a luz passa por ele, espalha arco-íris pelo campo de batalha — e devolve cada golpe.',
+      skill: { name: 'Prisma Refletor', cost: 3, target: 'self', desc: 'Devolve 50% do dano recebido e ganha Defesa+ por 2 turnos.',
+        fx: [{ k: 'status', s: 'reflect', t: 2, v: 0.5 }, { k: 'status', s: 'defUp', t: 2 }] } },
+    { id: 'lobo_solar', name: 'Lobo Solar', el: 'light', rarity: 'rare', role: 'attacker', en: 5,
+      title: 'Uivo do Meio-Dia',
+      story: 'Uiva para o sol, não para a lua. Dizem que foi ele quem acordou o dia na primeira manhã do mundo — e que nunca mais dormiu.',
+      skill: { name: 'Uivo Radiante', cost: 3, target: 'enemy', desc: '140% de dano e toda a equipe ganha Ataque+ por 2 turnos.',
+        fx: [{ k: 'dmg', p: 1.4 }, { k: 'status', s: 'atkUp', t: 2, to: 'allies' }] } },
+    { id: 'bruxa_pantano', name: 'Bruxa do Pântano', el: 'poison', rarity: 'rare', role: 'support', en: 5,
+      title: 'Caldeirão Borbulhante',
+      story: 'Mora numa casa de cogumelos e cozinha poções que curam os amigos e envenenam os inimigos. A receita é a mesma; só muda quem bebe.',
+      skill: { name: 'Caldeirão Duplo', cost: 3, target: 'allEnemies', desc: '2 acúmulos de veneno em todos os inimigos e cura o aliado mais ferido em 25%.',
+        fx: [{ k: 'status', s: 'poison', t: 3, v: 2 }, { k: 'heal', pct: 0.25, to: 'lowestAlly' }] } },
+    { id: 'leviata_plasma', name: 'Leviatã de Plasma', el: 'plasma', rarity: 'epic', role: 'attacker', en: 6,
+      title: 'Serpente do Sol Interior',
+      story: 'Nada dentro das estrelas como um peixe nada no mar. Quando sobe à superfície de um sol, o céu inteiro daquele sistema fica cor-de-rosa.',
+      skill: { name: 'Maré Estelar', cost: 4, target: 'allEnemies', desc: '100% de dano em todos que ignora 30% da defesa.',
+        fx: [{ k: 'dmg', p: 1.0, pierce: 0.3 }] } },
+    { id: 'titanide_terra', name: 'Titânide da Terra', el: 'earth', rarity: 'epic', role: 'tank', en: 6,
+      title: 'Mãe das Montanhas',
+      story: 'Cada montanha do mundo é um dedo da mão dela. Quando a Titânide fecha o punho, a terra inteira se prepara para proteger seus filhos.',
+      skill: { name: 'Punho da Cordilheira', cost: 4, target: 'allAllies', desc: 'Toda a equipe ganha escudo de 20% e Defesa+ por 2 turnos.',
+        fx: [{ k: 'shield', pct: 0.2 }, { k: 'status', s: 'defUp', t: 2 }] } },
+    { id: 'kraken_abissal', name: 'Kraken Abissal', el: 'water', rarity: 'legendary', role: 'tank', en: 6,
+      title: 'O Que Dorme no Fundo',
+      story: 'Tão grande que os marinheiros antigos o confundiam com ilhas. Acorda uma vez a cada século — e o mar inteiro sobe um pouco para recebê-lo.',
+      skill: { name: 'Abraço das Profundezas', cost: 4, target: 'allEnemies', desc: '120% de dano em todos e drena 1 de energia de cada inimigo.',
+        fx: [{ k: 'dmg', p: 1.2 }, { k: 'energy', n: -1 }] } },
+    { id: 'hierofante_verde', name: 'Hierofante Verde', el: 'nature', rarity: 'legendary', role: 'support', en: 6,
+      title: 'Sacerdote da Primeira Semente',
+      story: 'Guardou a primeira semente que já brotou no mundo. Diz que, enquanto ela viver, nada que é verde morre de verdade.',
+      skill: { name: 'Renascer da Semente', cost: 4, target: 'self', desc: 'Revive um aliado caído com 50% de vida; se ninguém caiu, cura a equipe em 30% e dá 1 de energia a todos.',
+        fx: [{ k: 'reviveOrHeal', pct: 0.5, healPct: 0.3 }] } },
+    { id: 'serafim_eclipse', name: 'Serafim do Eclipse', el: 'light', rarity: 'mythic', role: 'balanced', en: 6,
+      title: 'Asa de Sol, Asa de Lua',
+      story: 'Uma de suas asas é feita de luz e a outra de sombra. Quando as duas se cruzam, acontece um eclipse — e, por um instante, todo o mal do campo de batalha para.',
+      skill: { name: 'Eclipse Sagrado', cost: 4, target: 'allEnemies', desc: '120% de dano em todos (+50% contra Trevas), cura a equipe em 25% e remove os efeitos negativos dela.',
+        fx: [{ k: 'dmg', p: 1.2, bonusVs: 'dark' }, { k: 'heal', pct: 0.25, to: 'allies' }, { k: 'cleanse', to: 'allies' }] } },
+
+    // ----------------------------------------------------------- ATO III: EXCLUSIVOS DE CHEFES
+    { id: 'fray_redimido', name: 'Fray Redimido', el: 'gravity', rarity: 'mythic', role: 'balanced', en: 6, bossOnly: 'fray',
+      title: 'O Homem Bom',
+      story: 'Já desdobrou avenidas inteiras só para chamar atenção. Agora é gentil, generoso e incapaz de crueldade — e agradece sem saber exatamente pelo quê.',
+      skill: { name: 'Avenida Desdobrada', cost: 4, target: 'allEnemies', desc: 'Remove 18% da vida atual de todos os inimigos e os empurra para o fim da fila.',
+        fx: [{ k: 'pctHp', p: 0.18, minP: 0.6 }, { k: 'delay' }] } },
+    { id: 'guarda_estelar', name: 'Guarda Estelar', el: 'metal', rarity: 'mythic', role: 'tank', en: 6, bossOnly: 'voss',
+      title: 'Escudo do Império',
+      story: 'Serviu ao General Voss em mil batalhas. Quando o general caiu, ficou com o escudo dele — e jurou usá-lo só para proteger.',
+      skill: { name: 'Muralha Imperial', cost: 4, target: 'allAllies', desc: 'Toda a equipe ganha escudo de 30%; ele provoca os inimigos por 2 turnos.',
+        fx: [{ k: 'shield', pct: 0.3 }, { k: 'status', s: 'taunt', t: 2, to: 'self' }] } },
+    { id: 'santo_espada', name: 'Santo da Espada', el: 'dark', rarity: 'secret', role: 'attacker', en: 6, bossOnly: 'sombra',
+      title: 'A Sombra que Aprendeu a Cortar',
+      story: 'Carregava vinte por cento do poder de um deus numa lâmina só. Depois do sonho eterno, acordou pequeno — mas a espada continua inteira.',
+      skill: { name: 'Corte Divino', cost: 4, target: 'enemy', desc: '5 cortes de 50% que ignoram metade da defesa.',
+        fx: [{ k: 'dmg', p: 0.5, hits: 5, pierce: 0.5 }] } },
+    { id: 'coroa_estelar', name: 'Coroa Estelar', el: 'cosmic', rarity: 'secret', role: 'attacker', en: 6, bossOnly: 'imperador_estelar',
+      title: 'O Peso de Mil Universos',
+      story: 'A coroa do Imperador Estelar, que caiu quando a maldade dele foi apagada. Ainda guarda a lembrança de um soco que apagava universos.',
+      skill: { name: 'Soco do Fim dos Mundos', cost: 5, target: 'enemy', desc: '300% de dano e o golpe se espalha com 80% nos outros inimigos.',
+        fx: [{ k: 'dmg', p: 3.0 }, { k: 'chain', p: 0.8 }] } }
+
   ];
   S.forEach((s, i) => { s.num = i + 1; });
   SP.STICKERS = S;
@@ -565,6 +649,72 @@
         { name: 'Big Crunch', target: 'allEnemies', fx: [{ k: 'dmg', p: 1.0 }, { k: 'status', s: 'weaken', t: 2 }, { k: 'delay' }] },
         { name: 'Devorar Poderes', target: 'allEnemies', fx: [{ k: 'dispel' }, { k: 'energy', n: -1 }, { k: 'dmg', p: 0.7, ls: 0.4 }] },
         { name: 'Toque do Vazio', target: 'enemy', fx: [{ k: 'dispel' }, { k: 'dmg', p: 1.3 }] }
+      ] },
+    // ----------------------------------------------------------- ATO III (inspirados no livro "V")
+    { id: 'fray', name: 'Fray, o Desdobrador', el: 'gravity', stage: 45, act: 3,
+      title: 'O Homem Que Desdobrou a Avenida',
+      intro: 'Um manipulador de realidade rival que destrói quatro quarteirões só para ver se alguém aparece. Para ele, o mundo é um papel que se dobra.',
+      tip: 'Tempo tem vantagem sobre ele. Vento e Cósmico sofrem com a gravidade. Ele empurra sua equipe para o fim da fila.',
+      hp: 15, atk: 1.7, def: 1.05, spd: 1.05, acts: 2, en: 6,
+      pattern: [
+        { name: 'Dobrar a Avenida', target: 'allEnemies', fx: [{ k: 'dmg', p: 0.7 }, { k: 'delay' }] },
+        { name: 'Peso do Mundo', target: 'enemy', fx: [{ k: 'pctHp', p: 0.25, minP: 0.9 }, { k: 'status', s: 'slow', t: 2 }] },
+        { name: 'Golpe Desdobrado', target: 'enemy', fx: [{ k: 'dmg', p: 1.2 }] },
+        { name: 'Realidade Torta', target: 'allEnemies', fx: [{ k: 'status', s: 'weaken', t: 2 }, { k: 'energy', n: -1 }] }
+      ],
+      enrage: [
+        { name: 'Nada Me Toca', target: 'self', fx: [{ k: 'status', s: 'dodge', t: 3 }, { k: 'shield', pct: 0.08 }, { k: 'cleanse' }], once: true },
+        { name: 'Dobrar a Avenida', target: 'allEnemies', fx: [{ k: 'dmg', p: 0.9 }, { k: 'delay' }] },
+        { name: 'Peso do Mundo', target: 'enemy', fx: [{ k: 'pctHp', p: 0.3, minP: 1.0 }] }
+      ] },
+    { id: 'voss', name: 'General Voss', el: 'metal', stage: 50, act: 3,
+      title: 'O Primeiro Guardião',
+      intro: 'Comandante da nave do tamanho de uma lua. Blindado, disciplinado e certo de que nenhum herói passa por ele. Ainda não conheceu você.',
+      tip: 'Fogo, Plasma e Raio têm vantagem sobre ele. Quando ele se blinda, use dano que ignora defesa.',
+      hp: 17, atk: 1.75, def: 1.3, spd: 0.9, acts: 2, en: 6,
+      pattern: [
+        { name: 'Ordem de Ataque', target: 'enemy', fx: [{ k: 'dmg', p: 1.3 }] },
+        { name: 'Formação Blindada', target: 'self', fx: [{ k: 'shield', pct: 0.08 }, { k: 'status', s: 'defUp', t: 2 }] },
+        { name: 'Bombardeio Orbital', target: 'allEnemies', fx: [{ k: 'dmg', p: 0.8 }] },
+        { name: 'Ordem de Ataque', target: 'enemy', fx: [{ k: 'dmg', p: 1.3 }, { k: 'status', s: 'stun', t: 1, chance: 0.3 }] }
+      ],
+      enrage: [
+        { name: 'Protocolo Final', target: 'self', fx: [{ k: 'status', s: 'atkUp', t: 3 }, { k: 'cleanse' }] },
+        { name: 'Bombardeio Orbital', target: 'allEnemies', fx: [{ k: 'dmg', p: 0.95 }] },
+        { name: 'Lança da Nave', target: 'enemy', fx: [{ k: 'dmg', p: 1.6, pierce: 0.3 }] }
+      ] },
+    { id: 'sombra', name: 'A Sombra do Imperador', el: 'dark', stage: 55, act: 3,
+      title: 'Santo da Espada',
+      intro: 'Um espadachim com vinte por cento do poder de um deus. Cada corte dele chega antes do som da lâmina. Enfrentá-lo é como lutar contra o próprio medo.',
+      tip: 'Luz tem vantagem sobre ele. Ele corta várias vezes: escudos e Defesa+ ajudam muito.',
+      hp: 9, atk: 1.6, def: 1.05, spd: 1.35, acts: 2, en: 6,
+      pattern: [
+        { name: 'Corte Relâmpago', target: 'enemy', fx: [{ k: 'dmg', p: 0.45, hits: 3 }] },
+        { name: 'Dança das Lâminas', target: 'allEnemies', fx: [{ k: 'dmg', p: 0.65 }, { k: 'status', s: 'weaken', t: 2, chance: 0.5 }] },
+        { name: 'Postura do Santo', target: 'self', fx: [{ k: 'status', s: 'dodge', t: 3 }, { k: 'status', s: 'atkUp', t: 2 }] },
+        { name: 'Corte Relâmpago', target: 'enemy', fx: [{ k: 'dmg', p: 0.45, hits: 3 }] }
+      ],
+      enrage: [
+        { name: 'Vinte Por Cento de um Deus', target: 'allEnemies', fx: [{ k: 'dmg', p: 1.0 }, { k: 'status', s: 'stun', t: 1, chance: 0.25 }] },
+        { name: 'Corte Único', target: 'enemy', fx: [{ k: 'dmg', p: 1.9, pierce: 0.5 }] },
+        { name: 'Sonho Eterno', target: 'enemy', fx: [{ k: 'status', s: 'freeze', t: 1 }, { k: 'dmg', p: 0.8 }] }
+      ] },
+    { id: 'imperador_estelar', name: 'O Imperador Estelar', el: 'cosmic', stage: 60, act: 3,
+      title: 'O Soco Que Apaga Universos',
+      intro: 'Senhor do Império Estelar. Diz a lenda que um único soco dele apaga milhares de universos. Ele veio até a borda do multiverso para conhecer quem derrotou seus guardiões.',
+      tip: 'Gravidade tem vantagem sobre ele. Guarde curas e revivências para o soco final: ele fica muito mais forte na fúria.',
+      hp: 12, atk: 1.55, def: 1.15, spd: 1.1, acts: 2, en: 6,
+      pattern: [
+        { name: 'Decreto Imperial', target: 'allEnemies', fx: [{ k: 'dispel' }, { k: 'dmg', p: 0.7 }] },
+        { name: 'Punho Estelar', target: 'enemy', fx: [{ k: 'dmg', p: 1.4 }] },
+        { name: 'Trono de Estrelas', target: 'self', fx: [{ k: 'shield', pct: 0.08 }, { k: 'status', s: 'regen', t: 2, v: 0.02 }] },
+        { name: 'Punho Estelar', target: 'enemy', fx: [{ k: 'dmg', p: 1.4 }, { k: 'energy', n: -1 }] }
+      ],
+      enrage: [
+        { name: 'Ira do Império', target: 'self', fx: [{ k: 'status', s: 'atkUp', t: 3 }, { k: 'cleanse' }], once: true },
+        { name: 'Soco Que Apaga Universos', target: 'allEnemies', fx: [{ k: 'dmg', p: 1.15 }, { k: 'status', s: 'weaken', t: 2 }] },
+        { name: 'Decreto Imperial', target: 'allEnemies', fx: [{ k: 'dispel' }, { k: 'dmg', p: 0.8 }, { k: 'energy', n: -1 }] },
+        { name: 'Punho Estelar', target: 'enemy', fx: [{ k: 'dmg', p: 1.6 }] }
       ] }
   ];
   SP.BOSS = {};
@@ -579,12 +729,18 @@
     { name: 'Mar das Hidras',     stages: [21, 25], bg: ['#021a2e', '#0b5a7a'], act: 2 },
     { name: 'Picos da Tempestade',stages: [26, 30], bg: ['#16163a', '#5a5a12'], act: 2 },
     { name: 'Forja dos Titãs',    stages: [31, 35], bg: ['#1a1410', '#6b3a12'], act: 2 },
-    { name: 'Núcleo Ômega',       stages: [36, 40], bg: ['#05020c', '#5a0a4a'], act: 2 }
+    { name: 'Núcleo Ômega',       stages: [36, 40], bg: ['#05020c', '#5a0a4a'], act: 2 },
+    { name: 'A Dimensão-Espelho', stages: [41, 45], bg: ['#0a1a2a', '#5a7a9a'], act: 3 },
+    { name: 'Nave do Tamanho de uma Lua', stages: [46, 50], bg: ['#0a0e16', '#3a4a6a'], act: 3 },
+    { name: 'O Sonho Eterno',     stages: [51, 55], bg: ['#0c0414', '#3a0a3a'], act: 3 },
+    { name: 'A Borda do Multiverso', stages: [56, 60], bg: ['#000000', '#2a1a5a'], act: 3 }
   ];
   SP.REGIONS.forEach(r => { r.act = r.act || 1; });
-  SP.STAGE_COUNT = 40;
+  SP.STAGE_COUNT = 60;
   SP.ACT1_END = 20;
-  SP.starsForLevel = lvl => Math.max(1, Math.min(5, Math.ceil(lvl / 10)));
+  SP.ACT2_END = 40;
+  SP.ACTS = { 1: 'Ato I — O Despertar', 2: 'Ato II — O Devorador de Poderes', 3: 'Ato III — Além da Borda' };
+  SP.starsForLevel = lvl => Math.max(1, Math.min(6, Math.ceil(lvl / 10)));
   // Equipes inimigas de cada fase (fases de chefe ficam de fora).
   SP.STAGE_ENEMIES = {
     1: ['brasinha', 'faisca'],
@@ -619,13 +775,31 @@
     36: ['ceifadora_lunar', 'chronos', 'monge_gravidade'],
     37: ['gravitar', 'solar_titan', 'zumbeia'],
     38: ['frost_queen', 'imperador_trovao', 'serafim_aurora'],
-    39: ['void_king', 'aeon', 'colosso_mecanico']
+    39: ['void_king', 'aeon', 'colosso_mecanico'],
+    // Ato III
+    41: ['golem_cristal', 'lobo_solar', 'polvo_tinteiro'],
+    42: ['leviata_plasma', 'coruja_crepuscular', 'bruxa_pantano'],
+    43: ['kraken_abissal', 'titanide_terra', 'nuvenzinha'],
+    44: ['hierofante_verde', 'shadow_ninja', 'medusa_plasma'],
+    46: ['colosso_mecanico', 'tartaruga_ima', 'samurai_ferro'],
+    47: ['serafim_eclipse', 'imperador_trovao', 'golem_cristal'],
+    48: ['kraken_abissal', 'fenix_rubra', 'monge_gravidade'],
+    49: ['gravitar', 'leviata_plasma', 'hierofante_verde'],
+    51: ['ceifadora_lunar', 'shadow_ninja', 'coruja_crepuscular'],
+    52: ['frost_queen', 'serafim_eclipse', 'titanide_terra'],
+    53: ['void_king', 'kraken_abissal', 'bruxa_pantano'],
+    54: ['aeon', 'inferno_rex', 'hierofante_verde'],
+    56: ['prismora', 'gravitar', 'serafim_eclipse'],
+    57: ['void_king', 'imperador_trovao', 'titanide_terra'],
+    58: ['aeon', 'frost_queen', 'kraken_abissal'],
+    59: ['prismora', 'void_king', 'serafim_eclipse']
   };
 
   SP.stageInfo = function (n) {
     const boss = SP.BOSSES.find(b => b.stage === n) || null;
-    const level = n <= SP.ACT1_END ? Math.max(1, Math.min(30, Math.round(1 + (n - 1) * 1.45))) : Math.min(50, 30 + (n - SP.ACT1_END));
-    const enemyLevel = Math.max(1, level - (n <= 3 ? 1 : n <= 10 ? 2 : n <= 15 ? 3 : n <= 20 ? 5 : 3));
+    const level = n <= SP.ACT1_END ? Math.max(1, Math.min(30, Math.round(1 + (n - 1) * 1.45)))
+      : n <= SP.ACT2_END ? Math.min(50, 30 + (n - SP.ACT1_END)) : Math.min(60, 50 + Math.ceil((n - SP.ACT2_END) / 2));
+    const enemyLevel = Math.max(1, level - (n <= 3 ? 1 : n <= 10 ? 2 : n <= 15 ? 3 : n <= 20 ? 5 : n <= 40 ? 3 : 2));
     const stars = SP.starsForLevel(level);
     const region = SP.REGIONS.find(r => n >= r.stages[0] && n <= r.stages[1]);
     return {
@@ -679,18 +853,20 @@
 
   /* ---------------------------------------------------------------- PROGRESSÃO */
   SP.PROG = {
-    maxStars: 5,
+    maxStars: 6,
     levelCap: stars => stars * 10,
     xpToNext: level => 30 + level * 20,
     levelGrowth: 0.07,          // +7% dos atributos base por nível
     starGrowth: 0.22,           // +22% por estrela acima de 1
     evoCoins: stars => 250 * stars,
-    evoFrags: (rarity, stars) => Math.round(SP.RARITY[rarity].evoFrags * [0, 1, 2.5, 4, 6][stars]),
-    evoEssence: stars => [0, 0, 0, 2, 4][stars] || 0,   // estrelas 4 e 5 exigem Essência de chefe
+    evoFrags: (rarity, stars) => Math.round(SP.RARITY[rarity].evoFrags * [0, 1, 2.5, 4, 6, 9][stars]),
+    evoEssence: stars => [0, 0, 0, 2, 4, 8][stars] || 0,   // estrelas 4, 5 e 6 exigem Essência de chefe
+    evoCrystals: stars => (stars === 5 ? 20 : 0),          // a 6ª estrela (Transcendente) também pede Cristais
     trainCost: 80,              // moedas por treino
     trainXp: 60,                // XP por treino
     awakenedPower: 1.25,        // estrela 3: habilidade desperta (+25% de poder, -1 de custo)
     supremePower: 1.5,          // estrela 5: forma suprema (+50% de poder no total)
+    transcendPower: 1.75,       // estrela 6: transcendente (+75% de poder no total)
     startCoins: 300,
     starters: ['brasinha', 'gotinha', 'seixo']
   };
@@ -726,7 +902,7 @@
     { id: 'm_level50',   name: 'Lenda Viva dos Stickers',desc: 'Leve um sticker ao nível 50.',            stat: 'maxLevel',    goal: 50, reward: { coins: 3000, essence: 3 } },
     { id: 'm_star5',     name: 'Forma Suprema',          desc: 'Evolua um sticker até 5 estrelas.',       stat: 'maxStars',    goal: 5,  reward: { coins: 2500, tokens: { premium: 2 } } },
     { id: 'm_collect45', name: 'Álbum Gigante',          desc: 'Tenha 45 stickers diferentes.',           stat: 'uniqueOwned', goal: 45, reward: { coins: 2000, essence: 2 } },
-    { id: 'm_collect60', name: 'Álbum Completo!',        desc: 'Tenha todos os 60 stickers.',             stat: 'uniqueOwned', goal: 60, reward: { coins: 10000, essence: 10 } },
+    { id: 'm_collect60', name: 'Álbum Completo!',        desc: 'Tenha 60 stickers diferentes.',             stat: 'uniqueOwned', goal: 60, reward: { coins: 10000, essence: 10 } },
     { id: 'm_tower10',   name: 'Escalador',              desc: 'Alcance o andar 10 da Torre Infinita.',   stat: 'towerBest',   goal: 10, reward: { coins: 800, fragments: 80 } },
     { id: 'm_tower30',   name: 'Acima das Nuvens',       desc: 'Alcance o andar 30 da Torre Infinita.',   stat: 'towerBest',   goal: 30, reward: { coins: 2500, essence: 3 } },
     { id: 'm_tower60',   name: 'Rumo ao Infinito',       desc: 'Alcance o andar 60 da Torre Infinita.',   stat: 'towerBest',   goal: 60, reward: { coins: 6000, essence: 6 } },
@@ -735,6 +911,12 @@
     { id: 'm_night20',   name: 'Noite Sem Fim',          desc: 'Vença 20 fases do Modo Pesadelo.',        stat: 'nightCleared', goal: 20, reward: { coins: 4000, crystals: 15, essence: 3 } },
     { id: 'm_night40',   name: 'Senhor dos Pesadelos',   desc: 'Vença as 40 fases do Modo Pesadelo.',     stat: 'nightCleared', goal: 40, reward: { coins: 10000, crystals: 40, essence: 8 } },
     { id: 'm_duel',      name: 'Rivalidade Amigável',    desc: 'Jogue 1 Duelo Local.',                    stat: 'duels',        goal: 1,  reward: { coins: 300, crystals: 2 } },
+    { id: 'm_act3',      name: 'Além da Borda',          desc: 'Vença a fase 50 (Ato III).',              stat: 'cleared',      goal: 50, reward: { coins: 6000, essence: 4, crystals: 10 } },
+    { id: 'm_emperor',   name: 'Um Tirano a Menos',      desc: 'Vença a fase 60 e derrote o Imperador Estelar.', stat: 'cleared', goal: 60, reward: { coins: 15000, essence: 10, crystals: 30, tokens: { premium: 3 } } },
+    { id: 'm_boss12',    name: 'Lenda do Multiverso',    desc: 'Derrote os 12 chefes.',                   stat: 'bossKinds',    goal: 12, reward: { coins: 8000, essence: 6 } },
+    { id: 'm_star6',     name: 'Transcendência',         desc: 'Evolua um sticker até 6 estrelas.',       stat: 'maxStars',     goal: 6,  reward: { coins: 5000, crystals: 15 } },
+    { id: 'm_level60',   name: 'Acima do Limite',        desc: 'Leve um sticker ao nível 60.',            stat: 'maxLevel',     goal: 60, reward: { coins: 5000, essence: 5 } },
+    { id: 'm_collect76', name: 'Álbum Infinito',         desc: 'Tenha todos os 76 stickers do álbum.',    stat: 'uniqueOwned',  goal: 76, reward: { coins: 20000, essence: 15, crystals: 40 } },
     { id: 'm_frame',     name: 'Estilo Próprio',         desc: 'Compre uma moldura.',                     stat: 'framesOwned',  goal: 2,  reward: { coins: 500, crystals: 3 } }
   ];
 

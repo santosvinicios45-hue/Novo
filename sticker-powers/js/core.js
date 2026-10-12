@@ -97,7 +97,7 @@
     st.fragments = clampInt(raw.fragments, 0, 1e9, 0);
     st.essence = clampInt(raw.essence, 0, 1e6, 0);
     st.crystals = clampInt(raw.crystals, 0, 1e6, 0);
-    if (isObj(raw.nightmare)) st.nightmare.cleared = clampInt(raw.nightmare.cleared, 0, SP.STAGE_COUNT, 0);
+    if (isObj(raw.nightmare)) st.nightmare.cleared = clampInt(raw.nightmare.cleared, 0, SP.ACT2_END, 0);
     if (isObj(raw.frames)) {
       if (Array.isArray(raw.frames.owned)) raw.frames.owned.forEach(f => { if (SP.FRAME[f] && st.frames.owned.indexOf(f) < 0) st.frames.owned.push(f); });
       if (isObj(raw.frames.equip)) Object.keys(raw.frames.equip).forEach(id => {
@@ -274,10 +274,10 @@
     const sk = SP.STICKER[id].skill;
     const st = stars || 1;
     if (st < 3) return sk;
-    const supreme = st >= 5;
-    const k = supreme ? SP.PROG.supremePower : SP.PROG.awakenedPower;
+    const supreme = st >= 5, transcend = st >= 6;
+    const k = transcend ? SP.PROG.transcendPower : supreme ? SP.PROG.supremePower : SP.PROG.awakenedPower;
     return Object.assign({}, sk, {
-      name: sk.name + (supreme ? ' ✦✦' : ' ✦'), awakened: true, supreme, cost: Math.max(1, sk.cost - 1),
+      name: sk.name + (transcend ? ' ✦✦✦' : supreme ? ' ✦✦' : ' ✦'), awakened: true, supreme, transcend, cost: Math.max(1, sk.cost - 1),
       fx: sk.fx.map(f => {
         const g = Object.assign({}, f);
         if (g.p) g.p = Math.round(g.p * k * 100) / 100;
@@ -469,6 +469,53 @@
     return { ok: true, levels: ups };
   };
 
+  /**
+   * Treina repetidamente até acabar o dinheiro ou chegar ao limite da estrela.
+   * Retorna quantos treinos foram feitos, níveis ganhos e moedas gastas.
+   */
+  Core.trainMax = function (id) {
+    const o = SP.state.owned[id];
+    if (!o) return { ok: false, reason: 'Sticker não encontrado.' };
+    const start = o.level, coins = SP.state.coins;
+    let sessions = 0;
+    while (Core.canTrain(id).ok && sessions < 10000) {
+      SP.state.coins -= SP.PROG.trainCost;
+      Core.grantXp(id, SP.PROG.trainXp);
+      sessions++;
+    }
+    if (!sessions) return Object.assign({ sessions: 0, levels: 0, spent: 0 }, Core.canTrain(id));
+    Core.dailyCount('upgrades', 1);
+    return { ok: true, sessions, levels: o.level - start, spent: coins - SP.state.coins, atCap: o.level >= SP.PROG.levelCap(o.stars) };
+  };
+
+  /**
+   * Treina e evolui em sequência, o máximo que os recursos permitirem:
+   * treina até o limite da estrela, evolui se puder, e continua.
+   */
+  Core.evolveMax = function (id) {
+    const o = SP.state.owned[id];
+    if (!o) return { ok: false, reason: 'Sticker não encontrado.' };
+    const start = { level: o.level, stars: o.stars }, coins = SP.state.coins;
+    let sessions = 0, evolutions = 0, guard = 0;
+    while (guard++ < 50) {
+      const t = Core.trainMax(id);
+      if (t.ok) sessions += t.sessions;
+      const info = Core.evoInfo(id);
+      if (info.ok) { Core.evolve(id); evolutions++; continue; }
+      break;
+    }
+    const info = Core.evoInfo(id);
+    let stop = 'Evolução máxima alcançada!';
+    if (!info.maxed) {
+      if (!info.levelOk) stop = 'Parou: acabaram as moedas para treinar.';
+      else if (!info.coinsOk) stop = 'Parou: faltam moedas para evoluir.';
+      else if (!info.fragsOk) stop = 'Parou: faltam fragmentos para evoluir.';
+      else if (!info.essenceOk) stop = 'Parou: falta Essência para evoluir.';
+      else if (!info.crystalsOk) stop = 'Parou: faltam Cristais para evoluir.';
+    }
+    return { ok: sessions > 0 || evolutions > 0, sessions, evolutions, levels: o.level - start.level, starsFrom: start.stars, starsTo: o.stars, levelFrom: start.level, spent: coins - SP.state.coins, stop };
+  };
+
   Core.evoInfo = function (id) {
     const o = SP.state.owned[id];
     const s = SP.STICKER[id];
@@ -480,18 +527,21 @@
       coins: maxed ? 0 : SP.PROG.evoCoins(o.stars),
       frags: maxed ? 0 : SP.PROG.evoFrags(s.rarity, o.stars),
       essence: maxed ? 0 : SP.PROG.evoEssence(o.stars),
+      crystals: maxed ? 0 : SP.PROG.evoCrystals(o.stars),
       before: Core.statsFor(id, o.level, o.stars),
       after: maxed ? null : Core.statsFor(id, o.level, o.stars + 1),
       unlock: o.stars === 1 ? 'Talento elemental: ' + SP.ELEMENT[s.el].passive + ' + brilho holográfico na carta.'
             : o.stars === 2 ? 'Habilidade Desperta: +25% de poder e custo −1 + aura animada na carta.'
             : o.stars === 3 ? 'Limite de nível 40 + moldura de cristal na carta.'
-            : o.stars === 4 ? 'Forma Suprema: habilidade com +50% de poder (em vez de +25%) + coroa de luz na carta.' : ''
+            : o.stars === 4 ? 'Forma Suprema: habilidade com +50% de poder (em vez de +25%) + coroa de luz na carta.'
+            : o.stars === 5 ? 'Transcendente: limite de nível 60, habilidade com +75% de poder + aura arco-íris na carta.' : ''
     };
     info.levelOk = o.level >= info.needLevel;
     info.coinsOk = SP.state.coins >= info.coins;
     info.fragsOk = SP.state.fragments >= info.frags;
     info.essenceOk = SP.state.essence >= info.essence;
-    info.ok = !maxed && info.levelOk && info.coinsOk && info.fragsOk && info.essenceOk;
+    info.crystalsOk = SP.state.crystals >= info.crystals;
+    info.ok = !maxed && info.levelOk && info.coinsOk && info.fragsOk && info.essenceOk && info.crystalsOk;
     return info;
   };
   Core.evolve = function (id) {
@@ -502,10 +552,12 @@
     if (!info.coinsOk) return { ok: false, reason: 'Moedas insuficientes.' };
     if (!info.fragsOk) return { ok: false, reason: 'Fragmentos insuficientes.' };
     if (!info.essenceOk) return { ok: false, reason: 'Essência insuficiente. Derrote chefes ou suba a Torre Infinita.' };
+    if (!info.crystalsOk) return { ok: false, reason: 'Cristais insuficientes. Ganhe no Modo Pesadelo.' };
     const o = SP.state.owned[id];
     SP.state.coins -= info.coins;
     SP.state.fragments -= info.frags;
     SP.state.essence -= info.essence;
+    SP.state.crystals -= info.crystals;
     o.stars++;
     o.xp = 0;
     SP.state.stats.evolutions++;
@@ -635,7 +687,7 @@
 
   /* ---------------------------------------------------------------- o segredo do copo */
   // O copo só para depois que o Devorador (fase 40) é derrotado.
-  Core.vReady = () => SP.state.campaign.cleared >= SP.STAGE_COUNT;
+  Core.vReady = () => SP.state.campaign.cleared >= SP.ACT2_END;
   Core.unlockV = function () {
     if (SP.state.owned.v) return { ok: false, reason: 'already' };
     if (!Core.vReady()) return { ok: false, reason: 'notYet' };
@@ -651,7 +703,7 @@
   };
 
   /* ---------------------------------------------------------------- modo pesadelo */
-  Core.nightmareUnlocked = () => SP.state.campaign.cleared >= SP.STAGE_COUNT;
+  Core.nightmareUnlocked = () => SP.state.campaign.cleared >= SP.ACT2_END;
   Core.nightmareSpec = function (n) {
     const info = SP.stageInfo(n);
     const level = SP.NIGHTMARE.levelFor(n);

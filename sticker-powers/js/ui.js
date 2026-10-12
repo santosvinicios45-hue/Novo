@@ -185,7 +185,7 @@
     const locked = o.locked != null ? o.locked : !own;
     const stars = own ? own.stars : 1;
     const E = SP.ELEMENT[s.el];
-    const cls = ['card', 'r-' + s.rarity, 'el-' + s.el, locked ? 'locked' : '', !locked && stars >= 2 ? 's2' : '', !locked && stars >= 3 ? 's3' : '', !locked && stars >= 4 ? 's4' : '', !locked && stars >= 5 ? 's5' : '', !locked && own ? 'f-' + SP.Core.frameOf(id) : '', o.cls || ''].join(' ');
+    const cls = ['card', 'r-' + s.rarity, 'el-' + s.el, locked ? 'locked' : '', !locked && stars >= 2 ? 's2' : '', !locked && stars >= 3 ? 's3' : '', !locked && stars >= 4 ? 's4' : '', !locked && stars >= 5 ? 's5' : '', !locked && stars >= 6 ? 's6' : '', !locked && own ? 'f-' + SP.Core.frameOf(id) : '', o.cls || ''].join(' ');
     return `<div class="${cls}" data-id="${id}" style="--elc:${E.c1}" role="button" tabindex="0" aria-label="${locked ? 'Sticker desconhecido' : UI.esc(s.name)}">
       <div class="frame">
         <div class="art-box">${Art.sticker(id)}</div>
@@ -194,7 +194,7 @@
         ${!locked && own && own.fav ? `<span class="c-fav">${Art.icon('heart', 14)}</span>` : ''}
         ${o.isNew ? '<span class="c-new">NOVO!</span>' : ''}
         <div class="c-name">${locked ? '???' : UI.esc(s.name)}</div>
-        <div class="c-foot"><span class="c-rar">${locked ? '?' : UI.rarityName(s.rarity)}</span><span class="stars">${locked ? '' : (own ? 'Nv' + own.level + ' ' : '') + '★'.repeat(stars)}</span></div>
+        <div class="c-foot"><span class="c-rar">${locked ? '?' : UI.rarityName(s.rarity)}</span><span class="stars">${locked ? '' : (own ? 'Nv' + own.level + ' ' : '') + (stars > 3 ? '★' + stars : '★'.repeat(stars))}</span></div>
         <div class="holo"></div><div class="shine"></div>
       </div></div>`;
   };
@@ -233,7 +233,7 @@
       </div>
       <div class="showcase">${show.map(id => UI.card(id, { cls: 'sm', showCount: false })).join('')}</div>
       <div class="menu-grid">
-        <button class="menu-tile play" data-go="play">${Art.icon('play')}<span>JOGAR <small style="display:block">${st.campaign.cleared >= SP.STAGE_COUNT ? (st.nightmare.cleared < SP.STAGE_COUNT ? '😈 Modo Pesadelo — fase ' + (st.nightmare.cleared + 1) : 'Tudo zerado! Suba a Torre Infinita') : (next > SP.ACT1_END ? 'Ato II · ' : '') + 'Fase ' + next + ' — ' + SP.stageInfo(next).region.name}</small></span></button>
+        <button class="menu-tile play" data-go="play">${Art.icon('play')}<span>JOGAR <small style="display:block">${st.campaign.cleared >= SP.STAGE_COUNT ? (st.nightmare.cleared < SP.ACT2_END ? '😈 Modo Pesadelo — fase ' + (st.nightmare.cleared + 1) : 'Tudo zerado! Suba a Torre Infinita') : (next > SP.ACT2_END ? 'Ato III · ' : next > SP.ACT1_END ? 'Ato II · ' : '') + 'Fase ' + next + ' — ' + SP.stageInfo(next).region.name}</small></span></button>
         <button class="menu-tile t-album" data-go="collection">${Art.icon('album')}Coleção<small>${Core.uniqueOwned()}/${SP.STICKERS.length}</small></button>
         <button class="menu-tile t-pack" data-go="packs">${Art.icon('pack')}Abrir Pacotes<small>${free ? 'Pacote grátis disponível!' : tokens ? tokens + ' pacote(s) guardado(s)' : '&nbsp;'}</small>${free || tokens ? '<span class="notif-dot">!</span>' : ''}</button>
         <button class="menu-tile t-battle" data-go="battles">${Art.icon('swords')}Batalhas<small>Campanha · Pesadelo · Torre · Duelo</small></button>
@@ -255,7 +255,7 @@
       UI.sfx('click');
       const g = b.dataset.go;
       if (g === 'play') {
-        if (st.campaign.cleared >= SP.STAGE_COUNT) UI.go('battles', { tab: st.nightmare.cleared < SP.STAGE_COUNT ? 'nightmare' : 'tower' });
+        if (st.campaign.cleared >= SP.STAGE_COUNT) UI.go('battles', { tab: st.nightmare.cleared < SP.ACT2_END ? 'nightmare' : 'tower' });
         else UI.openStage(next);
       } else UI.go(g);
     }));
@@ -457,7 +457,7 @@
     const s = SP.STICKER[id];
     const tgt = { enemy: 'Um inimigo', allEnemies: 'Todos os inimigos', ally: 'Um aliado', allAllies: 'Toda a equipe', self: 'Si mesmo' }[sk.target];
     return `<div class="skill-box"><div class="sk-name"><span>✦ ${UI.esc(sk.name)}</span><span class="badge">${sk.cost} energia</span></div>
-      <div class="small-txt" style="margin-top:4px">${UI.esc(s.skill.desc)}${sk.supreme ? ' <b style="color:#ff9cf0">(Forma Suprema: +50% de poder, custo −1)</b>' : sk.awakened ? ' <b style="color:#ffe14d">(Desperta: +25% de poder, custo −1)</b>' : ''}</div>
+      <div class="small-txt" style="margin-top:4px">${UI.esc(s.skill.desc)}${sk.transcend ? ' <b style="color:#9cf5ff">(Transcendente: +75% de poder, custo −1)</b>' : sk.supreme ? ' <b style="color:#ff9cf0">(Forma Suprema: +50% de poder, custo −1)</b>' : sk.awakened ? ' <b style="color:#ffe14d">(Desperta: +25% de poder, custo −1)</b>' : ''}</div>
       <div class="small-txt muted" style="margin-top:4px">Alvo: ${tgt}</div></div>
       <div class="skill-box" style="${stars >= 2 ? '' : 'opacity:.55'}"><div class="sk-name" style="color:${SP.ELEMENT[s.el].c2}"><span>${Art.elementIcon(s.el, 14)} Talento: ${UI.elName(s.el)}</span><span class="badge">${stars >= 2 ? 'Ativo' : '🔒 Estrela 2'}</span></div>
       <div class="small-txt" style="margin-top:4px">${SP.ELEMENT[s.el].passive}</div></div>`;

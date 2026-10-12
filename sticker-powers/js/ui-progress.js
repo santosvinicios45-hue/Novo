@@ -54,20 +54,23 @@
             <b>🏋 Treinar</b>
             <div class="small-txt muted">Custa ${SP.PROG.trainCost} moedas e dá ${SP.PROG.trainXp} XP. Batalhas também dão XP para a equipe.${nextLv ? ' Próximo nível: atributos em verde acima.' : ''}</div>
             <div class="row" style="margin-top:8px"><button class="btn small blue" id="btTrain" ${tr.ok ? '' : 'disabled'}>Treinar <span class="cost">${Art.icon('coin', 14)} ${SP.PROG.trainCost}</span></button>
+            <button class="btn small blue" id="btTrainMax" ${tr.ok ? '' : 'disabled'} title="Treina sem parar até acabar o dinheiro ou chegar ao limite da estrela">⏩ Treinar ao máximo</button>
             ${!tr.ok ? `<span class="small-txt muted">${tr.reason}</span>` : ''}</div>
           </div>
           <div class="panel" style="background:rgba(0,0,0,.25);margin-top:10px">
             <b>✨ Evoluir</b> ${evo.maxed ? '<span class="badge" style="background:#ffc21a;color:#000">EVOLUÇÃO MÁXIMA</span>' : `<span class="small-txt muted">→ ${o.stars + 1} estrelas</span>`}
-            ${evo.maxed ? '<div class="small-txt muted" style="margin-top:6px">Este sticker alcançou a Forma Suprema: talento elemental ativo e habilidade com +50% de poder.</div>' : `
+            ${evo.maxed ? '<div class="small-txt muted" style="margin-top:6px">Este sticker transcendeu: talento elemental ativo, nível 60 e habilidade com +75% de poder.</div>' : `
             <div class="cost-line small-txt">
               <span class="${evo.levelOk ? 'ok' : 'no'}">${evo.levelOk ? '✓' : '✗'} Nível ${evo.needLevel}</span>
               <span class="${evo.coinsOk ? 'ok' : 'no'}">${evo.coinsOk ? '✓' : '✗'} ${Art.icon('coin', 14)} ${evo.coins}</span>
               <span class="${evo.fragsOk ? 'ok' : 'no'}">${evo.fragsOk ? '✓' : '✗'} ${Art.icon('frag', 14)} ${evo.frags} fragmentos</span>
               ${evo.essence ? `<span class="${evo.essenceOk ? 'ok' : 'no'}">${evo.essenceOk ? '✓' : '✗'} ${Art.icon('essence', 14)} ${evo.essence} essência</span>` : ''}
+              ${evo.crystals ? `<span class="${evo.crystalsOk ? 'ok' : 'no'}">${evo.crystalsOk ? '✓' : '✗'} 💠 ${evo.crystals} cristais</span>` : ''}
             </div>
             <div class="small-txt">Benefícios: atributos +${Math.round(SP.PROG.starGrowth * 100)}% (Vida ${evo.before.hp}→<b style="color:var(--good)">${evo.after.hp}</b>, Ataque ${evo.before.atk}→<b style="color:var(--good)">${evo.after.atk}</b>, Defesa ${evo.before.def}→<b style="color:var(--good)">${evo.after.def}</b>), limite de nível ${cap}→${SP.PROG.levelCap(o.stars + 1)}.</div>
             <div class="small-txt" style="color:#ffe14d;margin-top:4px">Desbloqueia: ${evo.unlock}</div>
-            <div class="row" style="margin-top:8px"><button class="btn small gold" id="btEvo" ${evo.ok ? '' : 'disabled'}>Evoluir!</button></div>`}
+            <div class="row" style="margin-top:8px"><button class="btn small gold" id="btEvo" ${evo.ok ? '' : 'disabled'}>Evoluir!</button>
+            <button class="btn small gold" id="btEvoMax" ${evo.ok || tr.ok ? '' : 'disabled'} title="Treina e evolui em sequência, o máximo que seus recursos permitirem">⏫ Treinar e evoluir ao máximo</button></div>`}
           </div>
           ${UI.skillHTML(sel, o.stars)}
         </div></div>`;
@@ -87,6 +90,30 @@
           UI.toast(`⬆ ${UI.esc(s.name)} subiu do nível ${before} para ${st.owned[sel].level}!`, 'good');
         } else SP.FX.float(card, '+' + SP.PROG.trainXp + ' XP', 'heal');
         drawList(); drawMain();
+      });
+      const tm = UI.$('#btTrainMax', main);
+      if (tm) tm.addEventListener('click', () => {
+        const before = o.level;
+        const r = Core.trainMax(sel);
+        if (!r.ok) { UI.sfx('error'); UI.toast(r.reason, 'bad'); return; }
+        UI.changed();
+        const card = UI.$('.card', main);
+        UI.sfx('coin'); if (r.levels) UI.sfx('levelup');
+        SP.FX.rarityBurst(card, s.rarity);
+        SP.FX.at(card, { style: 'coin', count: Math.min(60, 10 + r.sessions), speed: 260 });
+        if (r.levels) SP.FX.float(card, 'NÍVEL ' + st.owned[sel].level + '!', 'crit');
+        UI.toast(`⏩ ${r.sessions} treino(s) · ${Art.icon('coin', 14)} ${UI.fmt(r.spent)} gastas · Nv ${before} → <b>${st.owned[sel].level}</b>${r.atCap ? '<br>Chegou ao limite da estrela: hora de evoluir!' : '<br>Acabaram as moedas.'}`, 'gold');
+        drawList(); drawMain();
+      });
+      const em = UI.$('#btEvoMax', main);
+      if (em) em.addEventListener('click', () => {
+        const r = Core.evolveMax(sel);
+        if (!r.ok) { UI.sfx('error'); UI.toast(r.stop, 'bad'); return; }
+        UI.changed();
+        const summary = `⏫ Nv ${r.levelFrom} ${'★'.repeat(r.starsFrom)} → <b>Nv ${st.owned[sel].level} ${'★'.repeat(r.starsTo)}</b><br>${r.sessions} treino(s), ${r.evolutions} evolução(ões), ${UI.fmt(r.spent)} moedas gastas.<br><span class="small-txt">${r.stop}</span>`;
+        const done = () => { UI.toast(summary, 'gold'); drawList(); drawMain(); };
+        if (r.evolutions) evolveAnimation(sel, done);
+        else { UI.sfx('levelup'); SP.FX.rarityBurst(UI.$('.card', main), s.rarity); done(); }
       });
       const ev = UI.$('#btEvo', main);
       if (ev) ev.addEventListener('click', () => {
@@ -243,7 +270,7 @@
         <h2 class="section">Recordes</h2>
         <div class="stats-grid">
           ${[['Vitórias', S.battlesWon], ['Derrotas', S.battlesLost], ['Melhor sequência', S.bestStreak], ['Pacotes abertos', S.packsOpened], ['Stickers recebidos', S.stickersObtained],
-            ['Coleção', Core.uniqueOwned() + '/' + SP.STICKERS.length], ['Fases vencidas', st.campaign.cleared + '/' + SP.STAGE_COUNT], ['Chefes derrotados', Core.missionValue('bossKinds') + '/' + SP.BOSSES.length], ['Recorde da Torre', 'Andar ' + st.tower.best], ['Pesadelos vencidos', st.nightmare.cleared + '/' + SP.STAGE_COUNT], ['Duelos jogados', S.duels],
+            ['Coleção', Core.uniqueOwned() + '/' + SP.STICKERS.length], ['Fases vencidas', st.campaign.cleared + '/' + SP.STAGE_COUNT], ['Chefes derrotados', Core.missionValue('bossKinds') + '/' + SP.BOSSES.length], ['Recorde da Torre', 'Andar ' + st.tower.best], ['Pesadelos vencidos', st.nightmare.cleared + '/' + SP.ACT2_END], ['Duelos jogados', S.duels],
             ['Evoluções', S.evolutions], ['Habilidades usadas', S.skillsUsed], ['Golpes com vantagem', S.advantageHits], ['Moedas ganhas', UI.fmt(S.totalCoinsEarned)]]
             .map(([l, v]) => `<div class="panel"><b>${v}</b><span class="small-txt muted">${l}</span></div>`).join('')}
         </div>

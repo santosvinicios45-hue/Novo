@@ -694,3 +694,8 @@ body.reduced .bg-stars, body.reduced .bg-stars2 { animation: none; }
 .v-glass { z-index: 2; }
 .menu-tile .ui-ico { transition: transform .25s; }
 .menu-tile:hover .ui-ico { transform: scale(1.18) rotate(-6deg); }
+
+/* estrela 6: Transcendente — aura arco-íris girando atrás da arte */
+.card.s6 .art-box::after { content: ""; position: absolute; inset: -30%; z-index: 0; pointer-events: none; background: conic-gradient(from 0deg, rgba(255, 77, 109, .35), rgba(255, 225, 77, .35), rgba(61, 220, 132, .35), rgba(59, 139, 255, .35), rgba(176, 92, 255, .35), rgba(255, 77, 109, .35)); mix-blend-mode: screen; animation: spin 5s linear infinite; }
+.card.locked.s6 .art-box::after { display: none; }
+.card.s6 .c-foot .stars { background: linear-gradient(90deg, #ff4d6d, #ffe14d, #3ddc84, #3b8bff, #b05cff); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; }

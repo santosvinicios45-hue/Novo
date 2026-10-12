@@ -18,11 +18,11 @@ Depois acesse `http://localhost:8080`.
 ## Como jogar
 
 1. **Comece** com 3 stickers e 300 moedas. Abra o **Pacote Diário** (grátis uma vez por dia).
-2. **Jogar** leva direto para a próxima fase da campanha: **40 fases em 8 regiões**, divididas em Ato I (fases 1–20) e Ato II (fases 21–40, liberado ao vencer a fase 20). Escolha até 3 stickers e lute.
+2. **Jogar** leva direto para a próxima fase da campanha: **60 fases em 12 regiões**, divididas em Ato I (fases 1–20), Ato II (21–40) e Ato III — Além da Borda (41–60), cada ato liberado ao vencer o anterior. Escolha até 3 stickers e lute.
 3. Em combate, cada sticker tem **Atacar** (+1 energia), **Habilidade** (gasta energia) e **Defender** (−50% de dano, +1 energia). Toque no alvo quando for pedido. Há velocidade 1×/2×/3× e modo **AUTO**.
 4. Vitórias dão **moedas, XP e fragmentos**. Duplicatas de pacotes viram **fragmentos**.
-5. Em **Melhorias**: treine (moedas → XP), **evolua** até 5 estrelas (nível máximo + moedas + fragmentos; as estrelas 4 e 5 também pedem Essência) ou use a **Forja** para criar um sticker que falta.
-6. Derrote os **8 chefes** (a cada 5 fases) para ganhar Essência e um **sticker exclusivo**. Depois, desafie-os em níveis cada vez mais altos na aba **Chefes**.
+5. Em **Melhorias**: treine (moedas → XP), **evolua** até 6 estrelas (nível máximo + moedas + fragmentos; as estrelas 4, 5 e 6 também pedem Essência, e a 6ª pede Cristais) ou use a **Forja** para criar um sticker que falta. **⏩ Treinar ao máximo** gasta as moedas treinando até acabar o dinheiro ou chegar ao limite da estrela, e **⏫ Treinar e evoluir ao máximo** faz tudo em sequência e diz por que parou.
+6. Derrote os **12 chefes** (a cada 5 fases) para ganhar Essência e um **sticker exclusivo**. Depois, desafie-os em níveis cada vez mais altos na aba **Chefes**.
 7. Zerou? Encare o **Modo Pesadelo** (as 40 fases com inimigos muito mais fortes e regras especiais), suba a **Torre Infinita** ou chame alguém para um **Duelo Local** no mesmo aparelho.
 8. Use os **Cristais** do Pesadelo para comprar **Molduras** animadas para as cartas.
 9. Resgate recompensas em **Missões** (diárias e conquistas).
@@ -31,15 +31,15 @@ Depois acesse `http://localhost:8080`.
 
 | Sistema | O que tem |
 |---|---|
-| **Stickers** | 60 originais (52 em pacotes e 8 exclusivos de chefes), cada um com arte SVG própria, história, papel, atributos e uma habilidade exclusiva que realmente funciona em combate |
+| **Stickers** | 76 originais (64 em pacotes e 12 exclusivos de chefes), cada um com arte SVG própria, história, papel, atributos e uma habilidade exclusiva que realmente funciona em combate |
 | **Raridades** | Comum, Incomum, Raro, Épico, Lendário, Mítico e Secreto, cada uma com borda, brilho, partículas e som de revelação próprios (Lendário+ tem borda giratória; Mítico e Secreto têm holográfico; Secreto tem arco-íris e brilho estelar) |
 | **Elementos** | 15: Fogo, Água, Gelo, Raio, Terra, Vento, Luz, Trevas, Natureza, Plasma, Gravidade, Tempo, Cósmico, Veneno e Metal, com cores, ícones e partículas próprios. Vantagem = ×1,5 de dano; resistência = ×0,7 |
 | **Pacotes** | Diário (grátis), Básico, Fúria, Maré, Astral (por elemento), Evento semanal (elementos em destaque com peso 3×), Premium (último slot garantido Raro+) e Cósmico (pago com Essência). As chances exatas aparecem em “Probabilidades” |
 | **Coleção** | Busca, filtro por raridade, elemento, obtidos/faltando e favoritos; ordenação por nº, poder, raridade, nível e nome; porcentagem de conclusão e progresso por elemento; silhuetas para os que faltam; detalhes com carta 3D; comparação lado a lado |
 | **Combate** | Turnos por velocidade (com linha do tempo), energia, queimadura, veneno acumulável, congelar, atordoar, enfraquecer, lentidão, escudo, espinhos, provocação, esquiva, cura, regeneração, reviver, roubo de energia, turno extra e atraso de turno. IA escolhe alvos por vantagem elemental e vida baixa, cura aliados feridos e se protege. A partir da rodada 15, a “Fúria da Arena” aumenta o dano para evitar empates eternos |
-| **Chefes** | Ato I: Dragão do Apocalipse, Imperador do Vazio, Deusa do Tempo e Colosso das Sombras. Ato II: Hidra Abissal, Rainha das Tempestades, Titã de Aço e Ômega, o Devorador. Todos com tela de apresentação, 2 ações por rodada, padrão de ataques próprio, fase de fúria abaixo de 50% de vida, desafios repetíveis de nível crescente e recompensas exclusivas |
-| **Evolução** | Níveis 1–50 (limite de 10 por estrela, até 5 estrelas). Estrela 2 desbloqueia o **talento elemental** (ex.: Fogo queima com ataques normais, Luz regenera) e o brilho holográfico; estrela 3 desperta a habilidade (+25% de poder, custo −1) e adiciona uma aura animada; estrela 4 dá moldura de cristal; estrela 5 é a **Forma Suprema** (+50% de poder na habilidade e coroa de luz). Custos e ganhos são mostrados antes de confirmar |
-| **Modo Pesadelo** | Liberado ao vencer a fase 40: as 40 fases voltam com inimigos Nv 44–58 que lutam com força de Mítico e 1–2 regras por fase (Fúria Precoce, Espinhos, Vampirismo, Ferida Aberta, Blindados, Ar Tóxico, Gigantes, Velozes, Inimigos Carregados). Dá Cristais, em dobro na 1ª vitória |
+| **Chefes** | Ato I: Dragão do Apocalipse, Imperador do Vazio, Deusa do Tempo e Colosso das Sombras. Ato II: Hidra Abissal, Rainha das Tempestades, Titã de Aço e Ômega, o Devorador. Ato III (inspirado no índice do livro *V*): Fray, o Desdobrador, General Voss, A Sombra do Imperador e O Imperador Estelar. Todos com tela de apresentação, 2 ações por rodada, padrão de ataques próprio, fase de fúria abaixo de 50% de vida, desafios repetíveis de nível crescente e recompensas exclusivas |
+| **Evolução** | Níveis 1–60 (limite de 10 por estrela, até 6 estrelas). Estrela 2 desbloqueia o **talento elemental** (ex.: Fogo queima com ataques normais, Luz regenera) e o brilho holográfico; estrela 3 desperta a habilidade (+25% de poder, custo −1) e adiciona uma aura animada; estrela 4 dá moldura de cristal; estrela 5 é a **Forma Suprema** (+50% de poder na habilidade e coroa de luz); estrela 6 é **Transcendente** (nível 60, +75% de poder e aura arco-íris). Há botões para treinar e evoluir ao máximo de uma vez. Custos e ganhos são mostrados antes de confirmar |
+| **Modo Pesadelo** | Liberado ao vencer a fase 40: as 40 fases dos Atos I e II voltam com inimigos Nv 44–58 que lutam com força de Mítico e 1–2 regras por fase (Fúria Precoce, Espinhos, Vampirismo, Ferida Aberta, Blindados, Ar Tóxico, Gigantes, Velozes, Inimigos Carregados). Dá Cristais, em dobro na 1ª vitória |
 | **Duelo Local** | 2 jogadores no mesmo aparelho, com modo Equilibrado (todos no Nv 30, 3★) ou com os níveis da coleção. Sem recompensas |
 | **Molduras** | 10 molduras animadas (Neon, Ouro Real, Chamas, Cristal de Gelo, Galáxia, Pixel Retrô, Aurora…), escolhidas por sticker na ficha. Duas só saem por conquistas |
 | **Animações** | Projéteis com rastro de cada elemento, cortes nos ataques, cut-in estilo anime nas habilidades e golpes de chefe, pacote que rasga ao meio, cartas que voam do pacote, raios de luz atrás de Lendários ou melhores, barras de XP que enchem no resultado e ícones de elementos flutuando na tela inicial |
@@ -70,7 +70,7 @@ Só existem moedas fictícias, sem compras reais nem anúncios. Uma vitória rá
 
 ```bash
 cd sticker-powers
-node tests/run-tests.js      # 71 testes de lógica (sem navegador)
+node tests/run-tests.js      # 76 testes de lógica (sem navegador)
 ```
 Cobrem dados, as 40 fases, a Torre Infinita, a evolução até 5 estrelas, probabilidades (incluindo 200 mil sorteios comparados com as chances exibidas), garantia do Premium, pacote diário, duplicatas, evolução, forja, cada efeito de combate, vantagens elementais, chefes, IA, mil batalhas simuladas, recompensas, missões diárias, salvamento, save corrompido e exportar/importar.
 
@@ -90,7 +90,8 @@ sticker-powers/
 ├── js/core.js          estado, salvamento, economia, pacotes, progressão, missões
 ├── js/battle.js        motor de batalha por turnos e IA (sem DOM)
 ├── js/art.js           ilustrações SVG dos stickers e chefes do Ato I, ícones
-├── js/art2.js          ilustrações SVG do Ato II
+├── js/art2.js          ilustrações SVG do Ato II e dos segredos
+├── js/art3.js          ilustrações SVG do Ato III
 ├── js/audio.js         efeitos e música sintetizados
 ├── js/fx.js            partículas em canvas, clarões e tremores
 ├── js/ui.js            navegação, cartas, tela inicial, coleção, detalhes, comparação
