@@ -13,9 +13,11 @@
       <div class="tabs">
         <button class="tab ${tab === 'evolve' ? 'on' : ''}" data-t="evolve">⬆ Treinar e Evoluir</button>
         <button class="tab ${tab === 'forge' ? 'on' : ''}" data-t="forge">⚒ Forja</button>
+        <button class="tab ${tab === 'frames' ? 'on' : ''}" data-t="frames">🖼 Molduras</button>
       </div><div id="upBody"></div></div>`;
     UI.$$('.tab', el).forEach(t => t.addEventListener('click', () => { UI.sfx('click'); UI.currentParams = { tab: t.dataset.t }; UI.render('upgrades', { tab: t.dataset.t }); }));
     if (tab === 'forge') forge(UI.$('#upBody', el));
+    else if (tab === 'frames') frames(UI.$('#upBody', el));
     else evolveTab(UI.$('#upBody', el), params.id);
   };
 
@@ -145,6 +147,45 @@
     UI.$$('.forge-item .card', body).forEach(c => c.addEventListener('click', () => UI.showDetail(c.dataset.id)));
   }
 
+  /* ---------------------------------------------------------------- MOLDURAS */
+  function frames(body) {
+    const st = SP.state;
+    const sample = Object.keys(st.owned).sort((a, b) => SP.RARITY[SP.STICKER[b].rarity].rank - SP.RARITY[SP.STICKER[a].rarity].rank)[0];
+    const draw = () => {
+      body.innerHTML = `<div class="panel" style="margin-bottom:12px"><b>Molduras animadas</b>
+        <p class="small-txt muted" style="margin:6px 0 0">Puramente visuais: não mudam atributos. Compre com <b>💠 Cristais</b> (ganhos no Modo Pesadelo) e escolha a moldura de cada sticker na ficha dele, ou aplique em todos de uma vez.</p>
+        <p class="small-txt" style="margin:6px 0 0">Você tem <b>💠 ${st.crystals}</b> cristais.</p></div>
+        <div class="frames-grid">${SP.FRAMES.map(f => {
+          const owned = Core.frameUnlocked(f.id);
+          const avail = Core.frameAvailable(f.id);
+          let btn;
+          if (owned) btn = `<button class="btn small ghost" data-all="${f.id}">Aplicar em todos</button>`;
+          else if (f.unlock) btn = avail ? `<button class="btn small gold" data-buy="${f.id}">Resgatar</button>` : `<span class="small-txt muted">🔒 ${UI.esc(SP.MISSIONS.find(m => m.id === f.unlock).name)}</span>`;
+          else btn = `<button class="btn small ${st.crystals >= f.cost ? 'blue' : ''}" data-buy="${f.id}" ${st.crystals >= f.cost ? '' : 'disabled'}>Comprar 💠 ${f.cost}</button>`;
+          return `<div class="panel frame-item ${owned ? 'owned' : ''}"><div class="frame-demo">${UI.card(sample, { showCount: false, cls: 'f-' + f.id + ' sm demo' })}</div>
+            <b>${UI.esc(f.name)}</b><div class="small-txt muted">${UI.esc(f.desc)}</div>${btn}</div>`;
+        }).join('')}</div>`;
+      // a carta de demonstração usa a moldura do item, não a equipada
+      UI.$$('.frame-demo .card', body).forEach((c, i) => {
+        c.className = c.className.replace(/\bf-[a-z]+\b/g, '').trim() + ' f-' + SP.FRAMES[i].id;
+      });
+      UI.$$('[data-buy]', body).forEach(b => b.addEventListener('click', () => {
+        const r = Core.buyFrame(b.dataset.buy);
+        if (!r.ok) { UI.sfx('error'); UI.toast(r.reason, 'bad'); return; }
+        UI.changed(); UI.sfx('reveal', 4);
+        SP.FX.at(b, { style: 'confetti', count: 40, speed: 300 });
+        UI.toast('Moldura <b>' + UI.esc(SP.FRAME[b.dataset.buy].name) + '</b> liberada!', 'gold');
+        draw();
+      }));
+      UI.$$('[data-all]', body).forEach(b => b.addEventListener('click', () => {
+        Object.keys(st.owned).forEach(id => Core.equipFrame(id, b.dataset.all));
+        UI.changed(); UI.sfx('shield');
+        UI.toast('Moldura <b>' + UI.esc(SP.FRAME[b.dataset.all].name) + '</b> aplicada em todos os stickers.', 'good');
+      }));
+    };
+    draw();
+  }
+
   /* ---------------------------------------------------------------- MISSÕES */
   UI.screens.missions = function (el) {
     const draw = () => {
@@ -202,7 +243,7 @@
         <h2 class="section">Recordes</h2>
         <div class="stats-grid">
           ${[['Vitórias', S.battlesWon], ['Derrotas', S.battlesLost], ['Melhor sequência', S.bestStreak], ['Pacotes abertos', S.packsOpened], ['Stickers recebidos', S.stickersObtained],
-            ['Coleção', Core.uniqueOwned() + '/' + SP.STICKERS.length], ['Fases vencidas', st.campaign.cleared + '/' + SP.STAGE_COUNT], ['Chefes derrotados', Core.missionValue('bossKinds') + '/' + SP.BOSSES.length], ['Recorde da Torre', 'Andar ' + st.tower.best],
+            ['Coleção', Core.uniqueOwned() + '/' + SP.STICKERS.length], ['Fases vencidas', st.campaign.cleared + '/' + SP.STAGE_COUNT], ['Chefes derrotados', Core.missionValue('bossKinds') + '/' + SP.BOSSES.length], ['Recorde da Torre', 'Andar ' + st.tower.best], ['Pesadelos vencidos', st.nightmare.cleared + '/' + SP.STAGE_COUNT], ['Duelos jogados', S.duels],
             ['Evoluções', S.evolutions], ['Habilidades usadas', S.skillsUsed], ['Golpes com vantagem', S.advantageHits], ['Moedas ganhas', UI.fmt(S.totalCoinsEarned)]]
             .map(([l, v]) => `<div class="panel"><b>${v}</b><span class="small-txt muted">${l}</span></div>`).join('')}
         </div>

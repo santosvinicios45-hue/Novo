@@ -14,6 +14,8 @@
         <button class="tab ${tab === 'campaign' ? 'on' : ''}" data-t="campaign">🗺️ Campanha</button>
         <button class="tab ${tab === 'bosses' ? 'on' : ''}" data-t="bosses">👑 Chefes</button>
         <button class="tab ${tab === 'tower' ? 'on' : ''}" data-t="tower">🗼 Torre Infinita</button>
+        <button class="tab ${tab === 'nightmare' ? 'on' : ''} ${Core.nightmareUnlocked() ? '' : 'tab-locked'}" data-t="nightmare">😈 Pesadelo</button>
+        <button class="tab ${tab === 'duel' ? 'on' : ''}" data-t="duel">👥 Duelo Local</button>
         <button class="tab ${tab === 'quick' ? 'on' : ''}" data-t="quick">⚡ Batalha Rápida</button>
       </div><div id="tabBody"></div></div>`;
     UI.$$('.tab', el).forEach(t => t.addEventListener('click', () => { UI.sfx('click'); UI.currentParams = { tab: t.dataset.t }; UI.render('battles', { tab: t.dataset.t }); }));
@@ -21,6 +23,8 @@
     if (tab === 'campaign') campaign(body);
     else if (tab === 'bosses') bosses(body);
     else if (tab === 'tower') tower(body);
+    else if (tab === 'nightmare') nightmare(body);
+    else if (tab === 'duel') duel(body);
     else quick(body);
   };
 
@@ -98,6 +102,91 @@
     });
   }
 
+  /* ---------------------------------------------------------------- MODO PESADELO */
+  const modTags = mods => mods.map(id => { const M = SP.MODIFIER[id]; return `<span class="tag mod-tag" title="${UI.esc(M.desc)}">${M.icon} ${UI.esc(M.name)}</span>`; }).join(' ');
+  function nightmare(body) {
+    if (!Core.nightmareUnlocked()) {
+      body.innerHTML = `<div class="panel night-locked" style="text-align:center;max-width:560px;margin:0 auto"><div style="font-size:54px">😈</div><h3>Modo Pesadelo</h3><p class="muted">Vença a fase 40 da campanha para liberar. As 40 fases voltam com inimigos muito mais fortes e regras malucas.</p></div>`;
+      return;
+    }
+    const cl = SP.state.nightmare.cleared;
+    body.innerHTML = `<div class="panel night-head"><h3 style="margin:0;font-family:var(--font-display)">😈 Modo Pesadelo</h3>
+      <p class="small-txt muted">As 40 fases de novo, com inimigos Nv ${SP.NIGHTMARE.levelFor(1)}–${SP.NIGHTMARE.levelFor(40)} que lutam com força de Mítico e uma ou duas regras especiais. A 1ª vitória em cada fase dá cristais em dobro. Use os <b>💠 Cristais</b> para comprar molduras em Melhorias.</p>
+      <div class="row"><span class="badge">Vencidas: ${cl}/${SP.STAGE_COUNT}</span><span class="badge">💠 ${SP.state.crystals} cristais</span></div></div>
+      ${SP.REGIONS.map(r => `<div class="region night" style="background:linear-gradient(135deg, #12030a, ${r.bg[1]}88)">
+        <h4>${UI.esc(r.name)} <span class="small-txt muted">· Pesadelo ${r.stages[0]}–${r.stages[1]}</span></h4>
+        <div class="stage-path">${range(r.stages[0], r.stages[1]).map(n => {
+          const st = n <= cl ? 'cleared' : n === cl + 1 ? 'next' : 'locked';
+          const info = SP.stageInfo(n);
+          const icons = SP.NIGHTMARE.modsFor(n).map(id => SP.MODIFIER[id].icon).join('');
+          if (info.boss) return `<div class="stage-node boss night ${st}" data-n="${n}">${Art.boss(info.boss.id)}<span class="lvl">${icons}</span></div>`;
+          return `<div class="stage-node night ${st}" data-n="${n}">${st === 'cleared' ? '✓' : n}<span class="lvl">${icons}</span></div>`;
+        }).join('')}</div></div>`).join('')}`;
+    UI.$$('.stage-node', body).forEach(nd => nd.addEventListener('click', () => {
+      const k = +nd.dataset.n;
+      if (k > cl + 1) { UI.sfx('error'); UI.toast('Vença o pesadelo ' + (cl + 1) + ' primeiro.', 'bad'); return; }
+      UI.sfx('click');
+      UI.openNightmare(k);
+    }));
+  }
+  UI.openNightmare = function (n) {
+    const sp = Core.nightmareSpec(n);
+    const rw = SP.NIGHTMARE.rewards(n);
+    const first = n > SP.state.nightmare.cleared;
+    const go = () => UI.go('team', { kind: 'nightmare', stage: n });
+    const m = UI.modal(`<h3>😈 Pesadelo ${n} — ${UI.esc(SP.stageInfo(n).region.name)}</h3>
+      <p class="muted small-txt">Inimigos nível ${sp.level}${sp.boss ? ' · CHEFE: ' + UI.esc(SP.BOSS[sp.boss.id].name) : ' · força de Mítico'}</p>
+      <div class="vs-preview">${sp.boss ? `<div style="width:120px;height:120px;border-radius:16px;overflow:hidden;border:3px solid #ff2e7e">${Art.boss(sp.boss.id)}</div>` : sp.enemies.map(enemyMini).join('')}</div>
+      <div class="panel" style="margin-top:12px"><b>Regras desta fase</b>
+        ${sp.mods.map(id => { const M = SP.MODIFIER[id]; return `<div class="small-txt" style="margin-top:6px">${M.icon} <b>${UI.esc(M.name)}:</b> ${UI.esc(M.desc)}</div>`; }).join('')}</div>
+      <div class="small-txt" style="color:var(--gold);margin-top:10px">Vitória: ${rw.coins} moedas · 💠 ${rw.crystals * (first ? 2 : 1)} cristais${first ? ' (1ª vitória, em dobro)' : ''} · ${20 + n} fragmentos · ${150 + n * 10} XP</div>
+      <div class="row center" style="margin-top:14px"><button class="btn big red" id="nmGo">Enfrentar o pesadelo</button></div>`, { cls: 'narrow' });
+    UI.$('#nmGo', m).addEventListener('click', () => {
+      UI.sfx('click'); m.close();
+      if (sp.boss) UI.bossIntro(sp.boss.id, sp.level, go); else go();
+    });
+  };
+
+  /* ---------------------------------------------------------------- DUELO LOCAL */
+  function duel(body) {
+    body.innerHTML = `<div class="panel" style="text-align:center;max-width:620px;margin:0 auto">
+      <div style="font-size:50px">🔵 ⚔️ 🔴</div>
+      <h3 style="font-family:var(--font-display)">Duelo Local</h3>
+      <p class="muted">Dois jogadores no mesmo aparelho. Cada um escolhe 3 stickers da coleção e vocês se revezam: o <b style="color:#4ff0ff">Jogador 1</b> controla a equipe de baixo e o <b style="color:#ff4b6b">Jogador 2</b>, a de cima.</p>
+      <p class="small-txt muted">No modo <b>Equilibrado</b>, todos lutam no nível 30 com 3 estrelas: vence quem joga melhor, não quem treinou mais. Duelos não dão nem tiram recompensas.</p>
+      <button class="btn big gold" id="dGo">Escolher equipes</button></div>`;
+    UI.$('#dGo', body).addEventListener('click', () => { UI.sfx('click'); UI.go('duel'); });
+  }
+  UI.screens.duel = function (el) {
+    const owned = Object.keys(SP.state.owned).sort((a, b) => Core.ownedPower(b) - Core.ownedPower(a));
+    const pick = { 1: [], 2: [] };
+    let step = 1, fair = true;
+    const draw = () => {
+      const t = pick[step];
+      el.innerHTML = `<div class="wrap">
+        <div class="panel duel-head p${step}"><b style="font-size:20px">${step === 1 ? '🔵 Jogador 1' : '🔴 Jogador 2'}</b>, escolha 3 stickers ${step === 2 ? '<span class="small-txt muted">(o Jogador 1 não olha!)</span>' : ''}
+          <label class="row small-txt" style="margin-top:8px;gap:6px"><input type="checkbox" id="dFair" ${fair ? 'checked' : ''} ${step === 2 ? 'disabled' : ''}> Equilibrado (todos no nível 30, 3★)</label></div>
+        <div class="team-slots">${[0, 1, 2].map(i => t[i] ? UI.card(t[i], { showCount: false }) : `<div class="team-slot">Vaga ${i + 1}</div>`).join('')}</div>
+        <div class="card-grid pick-grid" id="dPick">${owned.map(id => UI.card(id, { cls: t.indexOf(id) >= 0 ? 'picked' : '', showCount: false })).join('')}</div>
+        <div class="sticky-bar"><span class="small-txt">${t.length}/3 escolhidos</span><div class="row">${step === 2 ? '<button class="btn ghost small" id="dBack">Voltar ao Jogador 1</button>' : ''}<button class="btn ${step === 1 ? 'blue' : 'red'} big" id="dNext" ${t.length === 3 ? '' : 'disabled'}>${step === 1 ? 'Passar para o Jogador 2 ▶' : '⚔ Duelar!'}</button></div></div></div>`;
+      UI.$('#dPick', el).addEventListener('click', e => {
+        const c = e.target.closest('.card'); if (!c) return;
+        const id = c.dataset.id, i = t.indexOf(id);
+        if (i >= 0) t.splice(i, 1); else if (t.length < 3) t.push(id); else { UI.sfx('error'); return; }
+        UI.sfx('click'); draw();
+      });
+      const f = UI.$('#dFair', el); if (f) f.addEventListener('change', e => { fair = e.target.checked; });
+      const bk = UI.$('#dBack', el); if (bk) bk.addEventListener('click', () => { step = 1; draw(); });
+      UI.$('#dNext', el).addEventListener('click', () => {
+        UI.sfx('click');
+        if (step === 1) { step = 2; draw(); el.scrollTop = 0; return; }
+        const spec = id => fair ? { id, level: 30, stars: 3 } : { id, level: SP.state.owned[id].level, stars: SP.state.owned[id].stars };
+        UI.go('battle', { kind: 'duel', fair, team: pick[1].slice(), enemies: pick[2].map(spec) });
+      });
+    };
+    draw();
+  };
+
   function quick(body) {
     const lvl = Core.teamPowerLevel(SP.state.team);
     body.innerHTML = `<div class="panel" style="text-align:center;max-width:560px;margin:0 auto">
@@ -170,6 +259,10 @@
       const t = Core.towerSpec(cfg.floor);
       return t.boss ? { boss: t.boss } : { enemies: t.enemies };
     }
+    if (cfg.kind === 'nightmare') {
+      const t = Core.nightmareSpec(cfg.stage);
+      return t.boss ? { boss: t.boss, mods: t.mods } : { enemies: t.enemies, mods: t.mods };
+    }
     return { enemies: cfg.enemies };
   }
 
@@ -178,10 +271,11 @@
     let team = st.team.filter(id => st.owned[id]).slice(0, 3);
     const foes = enemySpecs(cfg);
     const foeEls = foes.boss ? [SP.BOSS[foes.boss.id].el] : foes.enemies.map(e => SP.STICKER[e.id].el);
-    const title = cfg.kind === 'stage' ? 'Fase ' + cfg.stage : cfg.kind === 'boss' ? SP.BOSS[cfg.bossId].name + ' (nível ' + cfg.tier + ')' : cfg.kind === 'tower' ? 'Torre Infinita — andar ' + cfg.floor : 'Batalha Rápida';
+    const title = cfg.kind === 'nightmare' ? '😈 Pesadelo ' + cfg.stage : cfg.kind === 'stage' ? 'Fase ' + cfg.stage : cfg.kind === 'boss' ? SP.BOSS[cfg.bossId].name + ' (nível ' + cfg.tier + ')' : cfg.kind === 'tower' ? 'Torre Infinita — andar ' + cfg.floor : 'Batalha Rápida';
     el.innerHTML = `<div class="wrap">
       <div class="panel" style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><b>Adversário: ${UI.esc(title)}</b>
         <span class="small-txt muted">Elementos inimigos: ${foeEls.map(e => Art.elementIcon(e, 16)).join(' ')}</span></div>
+        ${foes.mods ? `<div class="row" style="margin-top:8px">${modTags(foes.mods)}</div>` : ''}
         <div class="vs-preview" style="margin-top:8px">${foes.boss ? `<div style="width:120px;height:120px;border-radius:16px;overflow:hidden;border:3px solid #ff2e7e">${Art.boss(foes.boss.id)}</div>` : foes.enemies.map(enemyMini).join('')}</div></div>
       <h2 class="section">Sua equipe (até 3)</h2>
       <div class="team-slots" id="slots"></div>
@@ -241,16 +335,20 @@
     el.style.padding = '0';
     el.style.overflow = 'hidden';
     const foes = enemySpecs(cfg);
-    const players = cfg.team.filter(id => SP.state.owned[id]).map(id => ({ id, level: SP.state.owned[id].level, stars: SP.state.owned[id].stars }));
+    const players = cfg.kind === 'duel' && cfg.fair ? cfg.team.map(id => ({ id, level: 30, stars: 3 }))
+      : cfg.team.filter(id => SP.state.owned[id]).map(id => ({ id, level: SP.state.owned[id].level, stars: SP.state.owned[id].stars }));
     const b = Battle.create(Object.assign({ players }, foes));
+    if (b.vanBond) setTimeout(() => UI.toast('📻 A Van ligou o rádio: o V começa com energia cheia!', 'gold'), 600);
     const token = {};
     Object.assign(BT, { active: true, b, cfg, el, token, waiting: null });
-    const region = cfg.kind === 'stage' ? SP.stageInfo(cfg.stage).region : SP.REGIONS[((cfg.tier || 1) + (cfg.floor || 0)) % SP.REGIONS.length];
+    const region = cfg.kind === 'stage' || cfg.kind === 'nightmare' ? SP.stageInfo(cfg.stage).region : SP.REGIONS[((cfg.tier || 1) + (cfg.floor || 0)) % SP.REGIONS.length];
     const bossCol = foes.boss ? SP.ELEMENT[SP.BOSS[foes.boss.id].el].c1 : null;
     el.innerHTML = `<div class="battle">
       <div class="battle-bg" style="background:radial-gradient(ellipse at 50% 20%, ${bossCol || region.bg[1]}66, transparent 60%), linear-gradient(180deg, ${region.bg[0]}, #05020c 55%, ${region.bg[0]})"></div>
       <div class="battle-top">
         <span class="round-badge" id="rnd">Rodada 1</span>
+        ${foes.mods ? `<span class="round-badge mods-badge" title="${foes.mods.map(id => SP.MODIFIER[id].name + ': ' + SP.MODIFIER[id].desc).join(' | ')}">${foes.mods.map(id => SP.MODIFIER[id].icon).join('')}</span>` : ''}
+        ${cfg.kind === 'duel' ? '<span class="round-badge" style="color:#ff4b6b">J2 ↑</span>' : ''}
         <div class="timeline" id="tl"></div>
         <button class="icon-btn speed-btn" id="spd" title="Velocidade">${SP.state.settings.battleSpeed}×</button>
         <button class="icon-btn speed-btn ${SP.state.settings.autoBattle ? 'on' : ''}" id="auto" title="Batalha automática">AUTO</button>
@@ -353,7 +451,8 @@
       UI.$$('.unit', BT.el).forEach(x => x.classList.toggle('active', x.dataset.uid === actor.uid));
       drawTimeline();
       let action;
-      if (actor.side === 'player' && !SP.state.settings.autoBattle) {
+      const human = actor.side === 'player' || (BT.cfg.kind === 'duel' && !BT.cfg.cpu);
+      if (human && !SP.state.settings.autoBattle) {
         action = await askPlayer(actor);
         if (BT.token !== token) return;
         if (action === 'auto') action = Battle.aiChoose(b, actor);
@@ -382,7 +481,8 @@
     atk.disabled = def.disabled = false;
     skl.disabled = actor.en < sk.cost;
     skl.innerHTML = `${UI.esc(sk.name)}<small>${sk.cost} energia${actor.en < sk.cost ? ' (faltam ' + (sk.cost - actor.en) + ')' : ''}</small>`;
-    who.innerHTML = `<span>Vez de <b>${UI.esc(actor.name)}</b> · energia ${actor.en}/${actor.maxEn}</span><span class="muted">${UI.esc(SP.STICKER[actor.id].skill.desc)}</span>`;
+    UI.$('#ctl', BT.el).classList.toggle('p2', BT.cfg.kind === 'duel' && actor.side === 'enemy');
+    who.innerHTML = `<span>${BT.cfg.kind === 'duel' ? (actor.side === 'player' ? '🔵 <b>Jogador 1</b> · ' : '🔴 <b>Jogador 2</b> · ') : ''}Vez de <b>${UI.esc(actor.name)}</b> · energia ${actor.en}/${actor.maxEn}</span><span class="muted">${UI.esc(SP.STICKER[actor.id].skill.desc)}</span>`;
   }
   function askPlayer(actor) {
     setControls(actor);
@@ -426,6 +526,21 @@
     }, { title: 'Desistir?', yes: 'Desistir', danger: true });
   };
 
+  /* cut-in estilo anime antes de habilidades */
+  function cutIn(actor, e) {
+    const fast = spd() >= 3 || SP.state.settings.reducedMotion;
+    const field = UI.$('#field', BT.el);
+    const E = SP.ELEMENT[e.el];
+    const d = document.createElement('div');
+    d.className = 'cutin ' + (actor.side === 'player' ? 'from-left' : 'from-right') + (actor.isBoss ? ' boss' : '') + (fast ? ' fast' : '');
+    d.style.setProperty('--c1', E.c1); d.style.setProperty('--c2', E.c2);
+    d.innerHTML = `<div class="ci-band"></div>${fast ? '' : `<div class="ci-art">${actor.isBoss ? Art.boss(actor.id) : Art.sticker(actor.id)}</div>`}<div class="ci-text"><small>${UI.esc(actor.name)}</small><b>${UI.esc(e.name)}</b></div>`;
+    field.appendChild(d);
+    const dur = fast ? 380 : 820;
+    setTimeout(() => d.remove(), dur);
+    return UI.sleep((fast ? 200 : 600) / Math.min(spd(), 2));
+  }
+
   /* animação dos eventos */
   const SKIP_TXT = { freeze: 'Congelado!', stun: 'Atordoado!' };
   async function play(events, token) {
@@ -444,26 +559,29 @@
           const actor = Battle.unit(b, e.u);
           const an = uel(e.u);
           if (an) { an.classList.remove('lunge-up', 'lunge-down'); void an.offsetWidth; an.classList.add(actor.side === 'player' ? 'lunge-up' : 'lunge-down'); }
-          if (e.kind !== 'attack') {
-            const bn = document.createElement('div');
-            bn.className = 'action-name';
-            bn.style.setProperty('--ac', SP.ELEMENT[e.el].c1);
-            bn.textContent = e.name;
-            UI.$('#field', BT.el).appendChild(bn);
-            setTimeout(() => bn.remove(), 1000);
-          }
           log((actor.side === 'enemy' ? '🔴 ' : '🔵 ') + actor.name + ' usou ' + e.name + (e.targets.length === 1 && e.targets[0] !== e.u ? ' em ' + Battle.unit(b, e.targets[0]).name : ''));
           if (e.kind === 'skill' || e.kind === 'boss') {
+            await cutIn(actor, e);
+            if (BT.token !== token) return;
             UI.sfx('skill', e.el);
-            e.targets.forEach(t => SP.FX.at(uel(t), { style: e.el, count: 34, speed: 300, size: 7 }));
+            const foes = e.targets.filter(t => Battle.unit(b, t).side !== actor.side);
+            const friends = e.targets.filter(t => Battle.unit(b, t).side === actor.side);
+            friends.forEach(t => { SP.FX.ringAt(uel(t), SP.ELEMENT[e.el].c2, { r1: 90 }); SP.FX.at(uel(t), { style: e.el, count: 20, speed: 140 }); });
+            if (foes.length) {
+              await Promise.all(foes.map((t, i) => UI.sleep(i * 70 / spd()).then(() => SP.FX.projectile(an, uel(t), e.el, { dur: 0.34 / spd(), size: e.kind === 'boss' ? 11 : 8 }))));
+              foes.forEach(t => SP.FX.at(uel(t), { style: e.el, count: 34, speed: 300, size: 7 }));
+            }
             if (e.kind === 'boss' && e.target === 'allEnemies') { SP.FX.flash(SP.ELEMENT[e.el].c1, 400); SP.FX.shake(UI.$('#sideP', BT.el), true); }
-            await wait(e.kind === 'boss' ? 650 : 520);
+            await wait(e.kind === 'boss' ? 300 : 220);
           } else if (e.kind === 'defend') {
             UI.sfx('shield');
             SP.FX.ringAt(an, '#4ff0ff', { r1: 90 });
             await wait(380);
           } else {
-            await wait(260);
+            const tn = uel(e.targets[0]);
+            await SP.FX.projectile(an, tn, e.el, { dur: 0.22 / spd(), size: 6, bend: 0.12 });
+            SP.FX.slash(tn, SP.ELEMENT[e.el].c2, 1);
+            await wait(60);
           }
           break;
         }
@@ -563,9 +681,13 @@
     const b = BT.b, cfg = BT.cfg;
     BT.active = false;
     const win = b.winner === 'player';
+    if (cfg.kind === 'duel') return finishDuel(win);
+    // guarda o XP antes, para animar as barras
+    const before = {};
+    (cfg.team || []).forEach(id => { const o = SP.state.owned[id]; if (o) before[id] = { level: o.level, xp: o.xp, stars: o.stars }; });
     const rw = Core.applyBattleResult({ kind: cfg.kind, stage: cfg.stage, bossId: cfg.bossId, tier: cfg.tier, team: cfg.team, win, skillsUsed: b.stats.skillsUsed, advantageHits: b.stats.advantageHits });
     UI.changed();
-    const isBoss = cfg.kind === 'boss' || (cfg.kind === 'stage' && SP.stageInfo(cfg.stage).boss) || (cfg.kind === 'tower' && SP.TOWER.isBoss(cfg.floor));
+    const isBoss = cfg.kind === 'boss' || ((cfg.kind === 'stage' || cfg.kind === 'nightmare') && SP.stageInfo(cfg.stage).boss) || (cfg.kind === 'tower' && SP.TOWER.isBoss(cfg.floor));
     if (win) {
       UI.sfx('victory');
       SP.FX.burst(innerWidth / 2, innerHeight * 0.3, { style: 'confetti', count: 120, speed: 520, life: 1.6 });
@@ -575,18 +697,19 @@
     if (rw.coins) items.push(`${Art.icon('coin', 22)} +${rw.coins}`);
     if (rw.fragments) items.push(`${Art.icon('frag', 22)} +${rw.fragments}`);
     if (rw.essence) items.push(`${Art.icon('essence', 22)} +${rw.essence}`);
-    if (rw.xp) items.push(`⭐ +${rw.xp} XP cada`);
+    if (rw.crystals) items.push(`💠 +${rw.crystals} cristais`);
     if (rw.tokens && rw.tokens.premium) items.push('🎟️ +1 Pacote Premium');
     const bossName = cfg.kind === 'boss' ? SP.BOSS[cfg.bossId].name : cfg.kind === 'tower' && isBoss ? SP.BOSS[Core.towerSpec(cfg.floor).boss.id].name : isBoss ? isBoss.name : null;
     const m = UI.modal(`<div class="result">
       <div class="r-title ${win ? 'win' : 'lose'}">${win ? 'VITÓRIA!' : b.timeout ? 'TEMPO ESGOTADO' : 'DERROTA'}</div>
       ${cfg.kind === 'tower' ? `<p><b>${win ? '🗼 Andar ' + cfg.floor + ' conquistado!' + (cfg.floor >= SP.state.tower.best && cfg.floor > 1 ? ' Novo recorde!' : '') : '🗼 Você voltou para o andar ' + rw.fellTo + '.'}</b></p>` : ''}
+      ${cfg.kind === 'nightmare' ? `<p><b>😈 Pesadelo ${cfg.stage}${win && rw.firstClear ? ' vencido pela primeira vez (cristais em dobro)!' : ''}</b></p>` : ''}
       <p class="muted">${win ? (bossName ? 'Você derrotou ' + UI.esc(bossName) + '!' : rw.firstClear ? 'Fase concluída pela primeira vez!' : 'Belo combate!') : 'Não desista! Treine e evolua seus stickers, ou tente outra equipe com vantagem elemental.'}</p>
       <div class="reward-list">${items.map((x, i) => `<div class="reward" style="animation-delay:${i * 0.12}s">${x}</div>`).join('')}</div>
-      ${rw.levelUps.length ? `<div class="panel small-txt" style="margin:8px auto;max-width:420px">${rw.levelUps.map(l => `⬆ <b>${UI.esc(SP.STICKER[l.id].name)}</b> subiu para o nível ${l.to}!`).join('<br>')}</div>` : ''}
+      ${rw.xp ? `<div class="xp-rows">${Object.keys(before).map(id => `<div class="xp-row" data-id="${id}"><div class="xp-mini">${Art.sticker(id)}</div><div class="xp-info"><div class="xp-top"><b>${UI.esc(SP.STICKER[id].name)}</b><span class="xp-lv">Nv ${before[id].level}</span></div><div class="bar"><i style="width:${xpPct(before[id])}%"></i></div></div><span class="xp-gain">+${rw.xp} XP</span></div>`).join('')}</div>` : ''}
       ${rw.sticker ? `<h3 style="color:#ffe14d;margin-top:10px">Sticker exclusivo obtido!</h3><div class="row center" id="rwCard">${UI.card(rw.sticker, { isNew: true, cls: 'lg' })}</div>` : ''}
       <div class="row center" style="margin-top:16px" id="rBtns"></div></div>`, { sticky: true, onClose: () => { SP.FX.clear(); } });
-    if (rw.levelUps.length) setTimeout(() => UI.sfx('levelup'), 600);
+    animateXp(m, before);
     if (rw.sticker) {
       const c = UI.$('#rwCard .card', m);
       UI.tilt(c);
@@ -597,6 +720,10 @@
       if (win && cfg.stage < SP.STAGE_COUNT) btns.push(['Próxima fase ▶', 'gold', () => { UI.go('battles', { tab: 'campaign' }, { replace: true }); UI.openStage(cfg.stage + 1); }]);
       btns.push([win ? 'Repetir fase' : 'Tentar de novo', '', () => UI.go('team', { kind: 'stage', stage: cfg.stage }, { replace: true })]);
       btns.push(['Mapa', 'ghost', () => UI.go('battles', { tab: 'campaign' }, { replace: true })]);
+    } else if (cfg.kind === 'nightmare') {
+      if (win && cfg.stage < SP.STAGE_COUNT) btns.push(['Próximo pesadelo ▶', 'red', () => { UI.go('battles', { tab: 'nightmare' }, { replace: true }); UI.openNightmare(cfg.stage + 1); }]);
+      btns.push([win ? 'Repetir' : 'Tentar de novo', '', () => UI.go('team', { kind: 'nightmare', stage: cfg.stage }, { replace: true })]);
+      btns.push(['Pesadelo', 'ghost', () => UI.go('battles', { tab: 'nightmare' }, { replace: true })]);
     } else if (cfg.kind === 'boss') {
       const t = Core.nextBossTier(cfg.bossId);
       btns.push([win ? 'Desafio nível ' + t : 'Tentar de novo', 'red', () => UI.bossIntro(cfg.bossId, Core.bossLevel(cfg.bossId, t), () => UI.go('team', { kind: 'boss', bossId: cfg.bossId, tier: t }, { replace: true }))]);
@@ -613,5 +740,49 @@
     if (!win) btns.push(['Melhorar stickers', 'green', () => UI.go('upgrades', null, { replace: true })]);
     UI.$('#rBtns', m).innerHTML = btns.map((x, i) => `<button class="btn ${x[1]}" data-i="${i}">${x[0]}</button>`).join('');
     UI.$$('#rBtns .btn', m).forEach(bt => bt.addEventListener('click', () => { UI.sfx('click'); m.close(); btns[+bt.dataset.i][2](); }));
+  }
+
+  function xpPct(o) {
+    const cap = SP.PROG.levelCap(o.stars);
+    return o.level >= cap ? 100 : Math.min(100, o.xp / SP.PROG.xpToNext(o.level) * 100);
+  }
+  /** Enche as barras de XP; a cada nível ganho a barra completa, pisca e recomeça. */
+  async function animateXp(m, before) {
+    for (const id of Object.keys(before)) {
+      const row = UI.$(`.xp-row[data-id="${id}"]`, m);
+      const now = SP.state.owned[id];
+      if (!row || !now) continue;
+      const bar = row.querySelector('.bar i'), lv = row.querySelector('.xp-lv');
+      let level = before[id].level;
+      await UI.sleep(350);
+      while (level < now.level && m.isConnected) {
+        bar.style.width = '100%';
+        await UI.sleep(420);
+        level++;
+        lv.textContent = 'Nv ' + level;
+        row.classList.remove('lvup'); void row.offsetWidth; row.classList.add('lvup');
+        UI.sfx('levelup');
+        SP.FX.at(row.querySelector('.xp-mini'), { style: 'light', count: 18, speed: 160 });
+        bar.style.transition = 'none'; bar.style.width = '0%'; void bar.offsetWidth; bar.style.transition = '';
+        await UI.sleep(120);
+      }
+      bar.style.width = xpPct(now) + '%';
+      if (now.level >= SP.PROG.levelCap(now.stars)) row.querySelector('.xp-gain').textContent = 'Nível máximo';
+    }
+  }
+
+  function finishDuel(p1win) {
+    const cfg = BT.cfg;
+    Core.applyBattleResult({ kind: 'duel', win: p1win });
+    UI.changed();
+    UI.sfx('victory');
+    SP.FX.burst(innerWidth / 2, innerHeight * 0.3, { style: 'confetti', count: 140, speed: 520, life: 1.6, colors: p1win ? ['#4ff0ff', '#3b8bff', '#ffffff'] : ['#ff4b6b', '#ff2e7e', '#ffffff'] });
+    const m = UI.modal(`<div class="result">
+      <div class="r-title win" style="${p1win ? '' : 'filter:hue-rotate(300deg) drop-shadow(0 0 20px rgba(255,75,107,.7))'}">${p1win ? 'JOGADOR 1' : 'JOGADOR 2'}<br>VENCEU!</div>
+      <p class="muted">Duelo local: só pela glória. Ninguém ganha nem perde recompensas.</p>
+      <div class="row center" style="margin-top:16px"><button class="btn gold" id="dRe">Revanche</button><button class="btn" id="dNew">Novas equipes</button><button class="btn ghost" id="dOut">Sair</button></div></div>`, { sticky: true, onClose: () => SP.FX.clear() });
+    UI.$('#dRe', m).addEventListener('click', () => { m.close(); UI.go('battle', cfg, { replace: true }); });
+    UI.$('#dNew', m).addEventListener('click', () => { m.close(); UI.go('duel', null, { replace: true }); });
+    UI.$('#dOut', m).addEventListener('click', () => { m.close(); UI.go('battles', { tab: 'duel' }, { replace: true }); });
   }
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -628,6 +628,83 @@ test('habilidade do V: congela inimigos, revive todos os aliados caídos, cura e
   assert(ev.some(e => e.t === 'status' && e.s === 'freeze') || ev.some(e => e.t === 'resist'), 'ninguém congelou (60% cada)');
 });
 
+/* ------------------------------------------------------------------ atualização 3 */
+console.log('\nPesadelo, duelo, molduras e a Van');
+test('Pesadelo: liberado só após a fase 40; cada fase tem 1–2 regras válidas e níveis crescentes', () => {
+  fresh();
+  assert(!Core.nightmareUnlocked());
+  SP.state.campaign.cleared = 40;
+  assert(Core.nightmareUnlocked());
+  let last = 0;
+  for (let n = 1; n <= 40; n++) {
+    const sp = Core.nightmareSpec(n);
+    assert(sp.mods.length >= 1 && sp.mods.length <= 2 && sp.mods.every(m => SP.MODIFIER[m]), 'regras da fase ' + n);
+    eq(new Set(sp.mods).size, sp.mods.length, 'regra repetida na fase ' + n);
+    assert(sp.level >= last); last = sp.level;
+    if (sp.enemies) sp.enemies.forEach(e => eq(e.asRarity, 'mythic'));
+  }
+});
+test('Pesadelo: inimigos com força de Mítico são mais fortes que o normal', () => {
+  const a = Battle.create({ players: [{ id: 'brasinha', level: 40 }], enemies: [{ id: 'gotinha', level: 40, stars: 4 }] });
+  const b = Battle.create({ players: [{ id: 'brasinha', level: 40 }], enemies: [{ id: 'gotinha', level: 40, stars: 4, asRarity: 'mythic' }] });
+  assert(b.units[1].maxHp > a.units[1].maxHp * 1.5 && b.units[1].atk > a.units[1].atk * 1.5);
+});
+test('regras do Pesadelo funcionam no combate', () => {
+  const mk = mods => Battle.create({ players: [{ id: 'gotinha', level: 30 }], enemies: [{ id: 'seixo', level: 30 }], mods, rng: seeded(3) });
+  eq(mk(['pressa']).units[1].en, mk(['pressa']).units[1].maxEn);
+  assert(mk(['blindados']).units[1].shield > 0);
+  assert(Battle.has(mk(['veneno']).units[0], 'poison'));
+  assert(Battle.has(mk(['espinhos']).units[1], 'reflect'));
+  assert(mk(['gigantes']).units[1].maxHp > mk([]).units[1].maxHp);
+  const c = mk(['cura']); c.units[0].hp = 10; c.units[0].en = 5;
+  const n = mk([]); n.units[0].hp = 10; n.units[0].en = 5;
+  Battle.act(c, c.units[0], { type: 'skill', target: 'p0' }); Battle.act(n, n.units[0], { type: 'skill', target: 'p0' });
+  assert(c.units[0].hp < n.units[0].hp, 'Ferida Aberta não reduziu a cura');
+  const f = mk(['furia']); f.round = 8; assert(Battle.arenaFury(f) > 1, 'fúria precoce');
+});
+test('Pesadelo: vitória dá cristais (dobro na 1ª vez) e avança', () => {
+  fresh(); SP.state.campaign.cleared = 40;
+  const r1 = Core.applyBattleResult({ kind: 'nightmare', stage: 1, team: ['brasinha'], win: true });
+  eq(SP.state.nightmare.cleared, 1); eq(r1.crystals, SP.NIGHTMARE.rewards(1).crystals * 2); eq(SP.state.crystals, r1.crystals);
+  const r2 = Core.applyBattleResult({ kind: 'nightmare', stage: 1, team: ['brasinha'], win: true });
+  eq(r2.crystals, SP.NIGHTMARE.rewards(1).crystals);
+});
+test('Duelo: não dá recompensa nem conta vitória/derrota ou habilidades', () => {
+  fresh();
+  const c = SP.state.coins, w = SP.state.stats.battlesWon;
+  const rw = Core.applyBattleResult({ kind: 'duel', win: true, skillsUsed: 50 });
+  eq(rw.coins, 0); eq(SP.state.coins, c); eq(SP.state.stats.battlesWon, w); eq(SP.state.stats.skillsUsed, 0); eq(SP.state.stats.duels, 1);
+});
+test('Molduras: comprar com cristais, equipar, conquistas liberam as especiais e o save guarda', () => {
+  fresh();
+  assert(!Core.buyFrame('neon').ok, 'comprou sem cristais');
+  SP.state.crystals = 10;
+  assert(Core.buyFrame('neon').ok); eq(SP.state.crystals, 4);
+  assert(!Core.buyFrame('neon').ok, 'comprou duas vezes');
+  assert(Core.equipFrame('brasinha', 'neon')); eq(Core.frameOf('brasinha'), 'neon');
+  assert(!Core.equipFrame('brasinha', 'ouro'), 'equipou moldura não comprada');
+  assert(!Core.buyFrame('vazio').ok, 'vazio sem conquista');
+  SP.state.tower.best = 60;
+  assert(Core.buyFrame('vazio').ok, 'vazio com conquista');
+  Core.save(); SP.state = null; Core.load();
+  eq(Core.frameOf('brasinha'), 'neon');
+  const bad = Core.sanitize({ frames: { owned: ['xx', 'neon'], equip: { brasinha: 'ouro', naoexiste: 'neon' } }, owned: { brasinha: {} } });
+  eq(bad.frames.owned.join(), 'classica,neon'); eq(Object.keys(bad.frames.equip).length, 0);
+});
+test('A Van: segundo segredo, só depois do V; com o V na equipe ele começa com energia cheia', () => {
+  fresh();
+  assert(SP.STICKER.van && SP.STICKER.van.hidden && SP.STICKERS.indexOf(SP.STICKER.van) < 0);
+  assert(SP.Art.has('van'));
+  eq(Core.unlockVan().reason, 'notYet');
+  SP.state.campaign.cleared = 40; Core.unlockV();
+  assert(Core.unlockVan().ok && SP.state.owned.van);
+  SP.PACKS.forEach(p => assert(!Core.packOdds(p.id).stickers.some(x => x.id === 'van')));
+  const b = Battle.create({ players: [{ id: 'v', level: 30 }, { id: 'van', level: 30 }], enemies: [{ id: 'seixo', level: 30 }] });
+  eq(b.units[0].en, b.units[0].maxEn); assert(b.vanBond);
+  const c = Battle.create({ players: [{ id: 'v', level: 30 }], enemies: [{ id: 'seixo', level: 30 }] });
+  eq(c.units[0].en, 1);
+});
+
 /* ------------------------------------------------------------------ economia */
 console.log('\nEconomia');
 test('é possível progredir só jogando: 20 vitórias rápidas pagam vários pacotes', () => {

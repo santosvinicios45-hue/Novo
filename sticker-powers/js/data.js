@@ -421,7 +421,15 @@
       quote: 'Eu prefiro carregar a culpa de ter feito, do que a culpa de não ter feito nada.',
       skill: { name: 'Eu Queria Que Isso Não Tivesse Acontecido', cost: 5, target: 'allEnemies',
         desc: 'O tempo para como o copo: congela todos os inimigos (60% de chance cada), traz de volta todos os aliados caídos com 40% de vida, cura a equipe em 20% e desfaz todos os efeitos negativos.',
-        fx: [{ k: 'status', s: 'freeze', t: 1, chance: 0.6 }, { k: 'reviveAll', pct: 0.4 }, { k: 'heal', pct: 0.2, to: 'allies' }, { k: 'cleanse', to: 'allies' }] } }
+        fx: [{ k: 'status', s: 'freeze', t: 1, chance: 0.6 }, { k: 'reviveAll', pct: 0.4 }, { k: 'heal', pct: 0.2, to: 'allies' }, { k: 'cleanse', to: 'allies' }] } },
+    { id: 'van', name: 'A Van', el: 'cosmic', rarity: 'secret', role: 'support', en: 6, hidden: true, num: 0,
+      title: 'Sem Nome, Só a Van',
+      story: 'Era pra ser uma brincadeira num sábado de manhã: a van do desenho que ele assistia aos oito anos. Apareceu na sala, quente como um animal dormindo. Não fala — pisca um farol para sim, dois para não, liga o limpador de para-brisa para dizer que você é burro e sempre acha a música certa antes de você saber o que está sentindo.',
+      quote: 'Você não criou uma amiga. Você ficou tão sozinho que a realidade sentiu pena.',
+      quoteBy: 'Rayan',
+      skill: { name: 'A Música Certa', cost: 3, target: 'allAllies',
+        desc: 'Liga o rádio: cura a equipe em 18%, dá 1 de energia a todos, remove efeitos negativos e deixa todos em regeneração por 2 turnos. Com o V na equipe, ele começa a batalha com energia cheia.',
+        fx: [{ k: 'heal', pct: 0.18 }, { k: 'energy', n: 1 }, { k: 'cleanse' }, { k: 'status', s: 'regen', t: 2, v: 0.06 }] } }
   ];
   SP.SECRET_STICKERS.forEach(s => { SP.STICKER[s.id] = s; });
 
@@ -721,7 +729,13 @@
     { id: 'm_collect60', name: 'Álbum Completo!',        desc: 'Tenha todos os 60 stickers.',             stat: 'uniqueOwned', goal: 60, reward: { coins: 10000, essence: 10 } },
     { id: 'm_tower10',   name: 'Escalador',              desc: 'Alcance o andar 10 da Torre Infinita.',   stat: 'towerBest',   goal: 10, reward: { coins: 800, fragments: 80 } },
     { id: 'm_tower30',   name: 'Acima das Nuvens',       desc: 'Alcance o andar 30 da Torre Infinita.',   stat: 'towerBest',   goal: 30, reward: { coins: 2500, essence: 3 } },
-    { id: 'm_tower60',   name: 'Rumo ao Infinito',       desc: 'Alcance o andar 60 da Torre Infinita.',   stat: 'towerBest',   goal: 60, reward: { coins: 6000, essence: 6 } }
+    { id: 'm_tower60',   name: 'Rumo ao Infinito',       desc: 'Alcance o andar 60 da Torre Infinita.',   stat: 'towerBest',   goal: 60, reward: { coins: 6000, essence: 6 } },
+    // Pesadelo, duelo e molduras
+    { id: 'm_night1',    name: 'Pesadelo Acordado',      desc: 'Vença 1 fase do Modo Pesadelo.',          stat: 'nightCleared', goal: 1,  reward: { coins: 1000, crystals: 5 } },
+    { id: 'm_night20',   name: 'Noite Sem Fim',          desc: 'Vença 20 fases do Modo Pesadelo.',        stat: 'nightCleared', goal: 20, reward: { coins: 4000, crystals: 15, essence: 3 } },
+    { id: 'm_night40',   name: 'Senhor dos Pesadelos',   desc: 'Vença as 40 fases do Modo Pesadelo.',     stat: 'nightCleared', goal: 40, reward: { coins: 10000, crystals: 40, essence: 8 } },
+    { id: 'm_duel',      name: 'Rivalidade Amigável',    desc: 'Jogue 1 Duelo Local.',                    stat: 'duels',        goal: 1,  reward: { coins: 300, crystals: 2 } },
+    { id: 'm_frame',     name: 'Estilo Próprio',         desc: 'Compre uma moldura.',                     stat: 'framesOwned',  goal: 2,  reward: { coins: 500, crystals: 3 } }
   ];
 
   // Missões diárias: reiniciam quando muda a data local do dispositivo.
@@ -731,6 +745,49 @@
     { id: 'd_skill5', name: 'Use 5 habilidades',        counter: 'skills', goal: 5, reward: { coins: 100 } },
     { id: 'd_train',  name: 'Treine ou evolua 1 sticker', counter: 'upgrades', goal: 1, reward: { coins: 80, fragments: 10 } }
   ];
+
+  /* ---------------------------------------------------------------- MODO PESADELO
+     As 40 fases de novo, com inimigos mais fortes e regras especiais. */
+  SP.MODIFIERS = [
+    { id: 'furia',     icon: '🔥', name: 'Fúria Precoce',   desc: 'A Fúria da Arena começa na rodada 6 (não na 16).' },
+    { id: 'espinhos',  icon: '🌵', name: 'Couraça de Espinhos', desc: 'Inimigos devolvem 20% de todo dano recebido.' },
+    { id: 'pressa',    icon: '⚡', name: 'Inimigos Carregados', desc: 'Inimigos começam com energia cheia.' },
+    { id: 'cura',      icon: '💔', name: 'Ferida Aberta',    desc: 'Toda cura na sua equipe vale metade.' },
+    { id: 'blindados', icon: '🛡️', name: 'Blindados',        desc: 'Inimigos começam com escudo de 25% da vida.' },
+    { id: 'veneno',    icon: '☠️', name: 'Ar Tóxico',        desc: 'Sua equipe começa com 2 acúmulos de veneno.' },
+    { id: 'vampiros',  icon: '🦇', name: 'Vampirismo',       desc: 'Inimigos recuperam 25% do dano que causam.' },
+    { id: 'gigantes',  icon: '🗿', name: 'Gigantes',         desc: 'Inimigos têm 40% a mais de vida.' },
+    { id: 'velozes',   icon: '💨', name: 'Velozes',          desc: 'Inimigos são 30% mais rápidos.' }
+  ];
+  SP.MODIFIER = {};
+  SP.MODIFIERS.forEach(m => { SP.MODIFIER[m.id] = m; });
+  SP.NIGHTMARE = {
+    levelFor: n => 44 + Math.round(n * 0.35),   // Nv 44 na fase 1 até Nv 58 na fase 40
+    modsFor: n => {
+      const M = SP.MODIFIERS, a = M[(n * 7) % M.length].id;
+      if (!SP.stageInfo(n).boss) return [a];
+      const b = M[(n * 3 + 4) % M.length].id;
+      return b === a ? [a, M[(n * 3 + 5) % M.length].id] : [a, b];
+    },
+    rewards: n => ({ coins: 200 + n * 25, crystals: 2 + Math.floor(n / 5) + (SP.stageInfo(n).boss ? 5 : 0) })
+  };
+
+  /* ---------------------------------------------------------------- MOLDURAS (cosméticos)
+     Compradas com Cristais do Pesadelo ou ganhas em conquistas. Só visual. */
+  SP.FRAMES = [
+    { id: 'classica', name: 'Clássica',    cost: 0,  desc: 'A moldura original da raridade.' },
+    { id: 'neon',     name: 'Neon',        cost: 6,  desc: 'Luz de letreiro que pulsa na borda.' },
+    { id: 'ouro',     name: 'Ouro Real',   cost: 10, desc: 'Borda de ouro trabalhado com brilho que corre.' },
+    { id: 'chamas',   name: 'Chamas',      cost: 14, desc: 'A carta pega fogo de verdade.' },
+    { id: 'gelo',     name: 'Cristal de Gelo', cost: 14, desc: 'Borda congelada com flocos caindo.' },
+    { id: 'galaxia',  name: 'Galáxia',     cost: 20, desc: 'Um céu estrelado que gira atrás da carta.' },
+    { id: 'pixel',    name: 'Pixel Retrô', cost: 12, desc: 'Moldura de videogame antigo.' },
+    { id: 'aurora',   name: 'Aurora',      cost: 25, desc: 'Ondas de aurora boreal que dançam na borda.' },
+    { id: 'vazio',    name: 'Vazio',       cost: null, unlock: 'm_tower60', desc: 'Só para quem chegou ao andar 60 da Torre.' },
+    { id: 'pesadelo', name: 'Pesadelo',    cost: null, unlock: 'm_night40', desc: 'Só para quem venceu as 40 fases do Pesadelo.' }
+  ];
+  SP.FRAME = {};
+  SP.FRAMES.forEach(f => { SP.FRAME[f.id] = f; });
 
   /* ---------------------------------------------------------------- TORRE INFINITA
      Andares sem fim. A cada 10 andares há um chefe. Ao perder, você volta

@@ -7,7 +7,7 @@
   'use strict';
   const SP = root.SP;
   const FX = SP.FX = {};
-  let cv, cx, W = 0, H = 0, dpr = 1, parts = [], rings = [], running = false, last = 0;
+  let cv, cx, W = 0, H = 0, dpr = 1, parts = [], rings = [], movers = [], slashes = [], running = false, last = 0;
 
   const reduced = () => !!(SP.state && SP.state.settings.reducedMotion);
 
@@ -64,6 +64,42 @@
       cx.strokeStyle = r.color; cx.lineWidth = r.width * (1 - k) + 1;
       cx.beginPath(); cx.arc(r.x, r.y, r.r0 + (r.r1 - r.r0) * k, 0, Math.PI * 2); cx.stroke();
     }
+    // projéteis: uma cabeça brilhante que deixa rastro de partículas
+    for (let i = movers.length - 1; i >= 0; i--) {
+      const m = movers[i];
+      m.t += dt / m.dur;
+      const k = Math.min(1, m.t), e = k * k * (3 - 2 * k);
+      const x = (1 - e) * (1 - e) * m.x0 + 2 * (1 - e) * e * m.cx + e * e * m.x1;
+      const y = (1 - e) * (1 - e) * m.y0 + 2 * (1 - e) * e * m.cy + e * e * m.y1;
+      const st = STYLES[m.style] || STYLES.plasma;
+      for (let j = 0; j < (reduced() ? 1 : 3); j++) {
+        const life = 0.35 + Math.random() * 0.3;
+        parts.push({ x: x + (Math.random() - 0.5) * 8, y: y + (Math.random() - 0.5) * 8, vx: (Math.random() - 0.5) * 60, vy: (Math.random() - 0.5) * 60, g: st.gravity * 0.3, drag: 3,
+          size: m.size * (0.4 + Math.random() * 0.6), color: st.colors[(Math.random() * st.colors.length) | 0], shape: st.shape, life, max: life, rot: Math.random() * 6, vr: 4 });
+      }
+      cx.globalAlpha = 1;
+      cx.fillStyle = st.colors[0];
+      cx.shadowColor = st.colors[0]; cx.shadowBlur = 18;
+      cx.beginPath(); cx.arc(x, y, m.size * 1.3, 0, Math.PI * 2); cx.fill();
+      cx.fillStyle = '#fff';
+      cx.beginPath(); cx.arc(x, y, m.size * 0.6, 0, Math.PI * 2); cx.fill();
+      cx.shadowBlur = 0;
+      if (k >= 1) { movers.splice(i, 1); m.done(); }
+    }
+    // cortes: arcos brilhantes que se desenham e somem
+    for (let i = slashes.length - 1; i >= 0; i--) {
+      const sl = slashes[i];
+      sl.life -= dt;
+      if (sl.life <= 0) { slashes.splice(i, 1); continue; }
+      const k = 1 - sl.life / sl.max;
+      cx.save();
+      cx.translate(sl.x, sl.y); cx.rotate(sl.rot);
+      cx.globalAlpha = Math.min(1, (1 - k) * 2);
+      cx.strokeStyle = sl.color; cx.lineWidth = 6 * (1 - k) + 1; cx.lineCap = 'round';
+      cx.shadowColor = sl.color; cx.shadowBlur = 14;
+      cx.beginPath(); cx.arc(0, 0, sl.r, -0.9, -0.9 + Math.min(1, k * 2.5) * 1.8); cx.stroke();
+      cx.restore();
+    }
     for (let i = parts.length - 1; i >= 0; i--) {
       const p = parts[i];
       p.life -= dt;
@@ -78,7 +114,7 @@
       draw(p);
     }
     cx.globalAlpha = 1;
-    if (parts.length || rings.length) requestAnimationFrame(loop);
+    if (parts.length || rings.length || movers.length || slashes.length) requestAnimationFrame(loop);
     else { running = false; cx.clearRect(0, 0, W, H); }
   }
   function kick() { if (!running && cx) { running = true; last = performance.now(); requestAnimationFrame(loop); } }
@@ -190,5 +226,27 @@
     document.body.appendChild(d);
     setTimeout(() => d.remove(), 1300);
   };
-  FX.clear = function () { parts = []; rings = []; };
+  /** Projétil de um elemento até outro; a promessa resolve quando acerta. */
+  FX.projectile = function (fromEl, toEl, style, opts) {
+    return new Promise(resolve => {
+      if (!cx || !fromEl || !toEl) return resolve();
+      const o = opts || {};
+      const a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+      const x0 = a.left + a.width / 2, y0 = a.top + a.height / 2, x1 = b.left + b.width / 2, y1 = b.top + b.height / 2;
+      const bend = (o.bend == null ? 0.25 : o.bend) * (Math.random() < 0.5 ? -1 : 1);
+      movers.push({ x0, y0, x1, y1, cx: (x0 + x1) / 2 + (y1 - y0) * bend, cy: (y0 + y1) / 2 - (x1 - x0) * bend,
+        t: 0, dur: (o.dur || 0.32), style, size: o.size || 7, done: resolve });
+      kick();
+    });
+  };
+  /** Corte em arco sobre um elemento (golpes físicos). */
+  FX.slash = function (el, color, n) {
+    if (!cx || !el) return;
+    const r = el.getBoundingClientRect();
+    for (let i = 0; i < (n || 1); i++) {
+      slashes.push({ x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width * (0.38 + i * 0.08), rot: Math.random() * 6, color: color || '#fff', life: 0.32, max: 0.32 });
+    }
+    kick();
+  };
+  FX.clear = function () { parts = []; rings = []; slashes = []; movers.forEach(m => m.done()); movers = []; };
 })(typeof window !== 'undefined' ? window : globalThis);

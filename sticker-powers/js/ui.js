@@ -26,7 +26,7 @@
   UI.stars = n => '★'.repeat(n) + '<span style="opacity:.25">' + '★'.repeat(Math.max(0, SP.PROG.maxStars - n)) + '</span>';
 
   /* ---------------------------------------------------------------- estrutura */
-  const TITLES = { home: 'Sticker Powers', collection: 'Coleção', packs: 'Pacotes', battles: 'Batalhas', team: 'Montar Equipe', battle: 'Batalha', upgrades: 'Melhorias', missions: 'Missões', settings: 'Configurações' };
+  const TITLES = { home: 'Sticker Powers', collection: 'Coleção', packs: 'Pacotes', battles: 'Batalhas', team: 'Montar Equipe', battle: 'Batalha', upgrades: 'Melhorias', missions: 'Missões', settings: 'Configurações', duel: 'Duelo Local' };
   let stack = [];
   UI.current = null;
 
@@ -40,6 +40,7 @@
           <div class="res-pill" id="resCoins" title="Moedas">${Art.icon('coin', 20)}<span>0</span></div>
           <div class="res-pill" id="resFrags" title="Fragmentos">${Art.icon('frag', 20)}<span>0</span></div>
           <div class="res-pill ess" id="resEss" title="Essência de chefe">${Art.icon('essence', 20)}<span>0</span></div>
+          <div class="res-pill cry" id="resCry" title="Cristais do Pesadelo" hidden><span class="cry-ico">💠</span><span>0</span></div>
         </div>
       </header>
       <main id="screen"></main>`;
@@ -78,6 +79,8 @@
       lastRes[id] = v;
     };
     set('resCoins', st.coins); set('resFrags', st.fragments); set('resEss', st.essence);
+    const cry = UI.$('#resCry');
+    if (cry) { cry.hidden = !(st.crystals > 0 || st.nightmare.cleared > 0); cry.querySelector('span:last-child').textContent = UI.fmt(st.crystals); }
   };
 
   /** Chamado após qualquer mudança de estado: salva, atualiza recursos e missões. */
@@ -182,7 +185,7 @@
     const locked = o.locked != null ? o.locked : !own;
     const stars = own ? own.stars : 1;
     const E = SP.ELEMENT[s.el];
-    const cls = ['card', 'r-' + s.rarity, 'el-' + s.el, locked ? 'locked' : '', !locked && stars >= 2 ? 's2' : '', !locked && stars >= 3 ? 's3' : '', !locked && stars >= 4 ? 's4' : '', !locked && stars >= 5 ? 's5' : '', o.cls || ''].join(' ');
+    const cls = ['card', 'r-' + s.rarity, 'el-' + s.el, locked ? 'locked' : '', !locked && stars >= 2 ? 's2' : '', !locked && stars >= 3 ? 's3' : '', !locked && stars >= 4 ? 's4' : '', !locked && stars >= 5 ? 's5' : '', !locked && own ? 'f-' + SP.Core.frameOf(id) : '', o.cls || ''].join(' ');
     return `<div class="${cls}" data-id="${id}" style="--elc:${E.c1}" role="button" tabindex="0" aria-label="${locked ? 'Sticker desconhecido' : UI.esc(s.name)}">
       <div class="frame">
         <div class="art-box">${Art.sticker(id)}</div>
@@ -221,17 +224,19 @@
     const free = Core.freePackAvailable();
     const tokens = st.tokens.basic + st.tokens.premium;
     const next = Math.min(SP.STAGE_COUNT, st.campaign.cleared + 1);
+    const floaters = SP.ELEMENTS.map((e, i) => `<span style="left:${(i * 37 + 5) % 96}%;animation-duration:${14 + (i * 7) % 12}s;animation-delay:${-(i * 2.3)}s">${Art.elementIcon(e.id, 22)}</span>`).join('');
     el.innerHTML = `<div class="wrap home">
+      <div class="home-floaters" aria-hidden="true">${floaters}</div>
       <div class="logo"><div class="orbit"></div>
         <div class="logo-main"><span>STICKER</span><span>POWERS</span></div>
         <div class="logo-sub">O Despertar dos Poderes</div>
       </div>
       <div class="showcase">${show.map(id => UI.card(id, { cls: 'sm', showCount: false })).join('')}</div>
       <div class="menu-grid">
-        <button class="menu-tile play" data-go="play">${Art.icon('play')}<span>JOGAR <small style="display:block">${st.campaign.cleared >= SP.STAGE_COUNT ? 'Campanha completa! Suba a Torre Infinita' : (next > SP.ACT1_END ? 'Ato II · ' : '') + 'Fase ' + next + ' — ' + SP.stageInfo(next).region.name}</small></span></button>
+        <button class="menu-tile play" data-go="play">${Art.icon('play')}<span>JOGAR <small style="display:block">${st.campaign.cleared >= SP.STAGE_COUNT ? (st.nightmare.cleared < SP.STAGE_COUNT ? '😈 Modo Pesadelo — fase ' + (st.nightmare.cleared + 1) : 'Tudo zerado! Suba a Torre Infinita') : (next > SP.ACT1_END ? 'Ato II · ' : '') + 'Fase ' + next + ' — ' + SP.stageInfo(next).region.name}</small></span></button>
         <button class="menu-tile t-album" data-go="collection">${Art.icon('album')}Coleção<small>${Core.uniqueOwned()}/${SP.STICKERS.length}</small></button>
         <button class="menu-tile t-pack" data-go="packs">${Art.icon('pack')}Abrir Pacotes<small>${free ? 'Pacote grátis disponível!' : tokens ? tokens + ' pacote(s) guardado(s)' : '&nbsp;'}</small>${free || tokens ? '<span class="notif-dot">!</span>' : ''}</button>
-        <button class="menu-tile t-battle" data-go="battles">${Art.icon('swords')}Batalhas<small>Campanha · Chefes · Torre</small></button>
+        <button class="menu-tile t-battle" data-go="battles">${Art.icon('swords')}Batalhas<small>Campanha · Pesadelo · Torre · Duelo</small></button>
         <button class="menu-tile t-up" data-go="upgrades">${Art.icon('up')}Melhorias<small>Treinar · Evoluir · Forja</small></button>
         <button class="menu-tile t-mission" data-go="missions">${Art.icon('scroll')}Missões<small>Diárias e conquistas</small>${claim ? `<span class="notif-dot">${claim}</span>` : ''}</button>
         <button class="menu-tile t-settings" data-go="settings">${Art.icon('gear')}Configurações<small>Som · Animações · Save</small></button>
@@ -250,7 +255,7 @@
       UI.sfx('click');
       const g = b.dataset.go;
       if (g === 'play') {
-        if (st.campaign.cleared >= SP.STAGE_COUNT) UI.go('battles', { tab: 'tower' });
+        if (st.campaign.cleared >= SP.STAGE_COUNT) UI.go('battles', { tab: st.nightmare.cleared < SP.STAGE_COUNT ? 'nightmare' : 'tower' });
         else UI.openStage(next);
       } else UI.go(g);
     }));
@@ -295,20 +300,21 @@
       UI.revealV();
     }, 1800);
   };
-  UI.revealV = function () {
-    const s = SP.STICKER.v;
+  UI.revealV = () => UI.revealSecret('v');
+  UI.revealSecret = function (sid) {
+    const s = SP.STICKER[sid];
     SP.FX.flash('#ffe08a', 900);
     UI.sfx('reveal', 6);
     const m = UI.modal(`<div class="v-reveal">
       <div class="v-kicker">STICKER SECRETO DESCOBERTO</div>
-      <div class="row center">${UI.card('v', { cls: 'lg', isNew: true, showCount: false })}</div>
-      <blockquote class="v-quote">“${UI.esc(s.quote)}”<span>— V</span></blockquote>
-      <p class="small-txt muted">Ele não está no álbum, não sai em pacotes e não pode ser forjado. Só quem fez o copo parar o encontra.</p>
-      <div class="row center"><button class="btn gold" id="vSee">Ver o V</button></div></div>`, { cls: 'narrow' });
+      <div class="row center">${UI.card(sid, { cls: 'lg', isNew: true, showCount: false })}</div>
+      <blockquote class="v-quote">“${UI.esc(s.quote)}”<span>— ${UI.esc(s.quoteBy || 'V')}</span></blockquote>
+      <p class="small-txt muted">${sid === 'van' ? 'Ela não está no álbum e nunca vai falar. Mas, com o V na mesma equipe, liga o rádio e ele começa a luta com energia cheia.' : 'Ele não está no álbum, não sai em pacotes e não pode ser forjado. Só quem fez o copo parar o encontra.'}</p>
+      <div class="row center"><button class="btn gold" id="vSee">${sid === 'van' ? 'Ver a Van' : 'Ver o V'}</button></div></div>`, { cls: 'narrow' });
     const c = UI.$('.card', m);
     UI.tilt(c);
     setTimeout(() => { SP.FX.rarityBurst(c, 'secret'); SP.FX.at(c, { style: 'time', count: 60, speed: 300 }); }, 250);
-    UI.$('#vSee', m).addEventListener('click', () => { m.close(); UI.showDetail('v'); });
+    UI.$('#vSee', m).addEventListener('click', () => { m.close(); UI.showDetail(sid); });
   };
 
   UI.showIntro = function () {
@@ -485,12 +491,14 @@
         ${UI.statBars(stats)}
         ${UI.skillHTML(id, own.stars)}
         ${UI.matchup(s.el)}
-        ${s.quote ? `<blockquote class="v-quote">“${UI.esc(s.quote)}”<span>— V</span></blockquote>` : ''}
+        ${s.quote ? `<blockquote class="v-quote">“${UI.esc(s.quote)}”<span>— ${UI.esc(s.quoteBy || 'V')}</span></blockquote>` : ''}
         <p class="story" style="margin-top:12px">${UI.esc(s.story)}</p>
         <div class="row" style="margin-top:12px">
           <button class="btn small ${own.fav ? 'red' : 'ghost'}" data-a="fav">${Art.icon('heart', 16)} ${own.fav ? 'Favorito' : 'Favoritar'}</button>
           <button class="btn small ghost" data-a="cmp">${Art.icon('compare', 16)} Comparar</button>
           <button class="btn small green" data-a="up">${Art.icon('up', 16)} Melhorar</button>
+        </div>
+        <div class="frame-pick"><span class="small-txt muted">Moldura:</span>${SP.FRAMES.filter(f => Core.frameUnlocked(f.id)).map(f => `<button class="chip ${Core.frameOf(id) === f.id ? 'on' : ''}" data-frame="${f.id}">${UI.esc(f.name)}</button>`).join('')}${SP.state.frames.owned.length < 2 ? '<span class="small-txt muted">Compre molduras em Melhorias.</span>' : ''}
         </div>
       </div></div>`);
     const big = UI.$('.card.lg', m);
@@ -511,6 +519,39 @@
       UI.toast('Escolha outro sticker para comparar com <b>' + UI.esc(s.name) + '</b>.');
     });
     UI.$('[data-a=up]', m).addEventListener('click', () => { m.close(); UI.go('upgrades', { id }); });
+    UI.$$('[data-frame]', m).forEach(bt => bt.addEventListener('click', () => {
+      Core.equipFrame(id, bt.dataset.frame);
+      UI.changed(); UI.sfx('shield');
+      UI.$$('[data-frame]', m).forEach(x => x.classList.toggle('on', x === bt));
+      const old = UI.$('.card.lg', m);
+      old.outerHTML = UI.card(id, { cls: 'lg', showCount: false });
+      const nc = UI.$('.card.lg', m); UI.tilt(nc); SP.FX.rarityBurst(nc, s.rarity);
+      if (UI.redrawCollection && UI.current === 'collection') UI.redrawCollection();
+    }));
+    // segredo: os faróis da Van na ficha do V
+    if (id === 'v') {
+      const art = UI.$('.card.lg .art-box', m);
+      const hl = document.createElement('button');
+      hl.className = 'van-lights'; hl.setAttribute('aria-label', 'Dois faróis no escuro');
+      art.appendChild(hl);
+      let blinks = 0;
+      hl.addEventListener('click', ev => {
+        ev.stopPropagation();
+        blinks++;
+        hl.classList.remove('blink'); void hl.offsetWidth; hl.classList.add('blink');
+        UI.sfx('click');
+        if (SP.state.owned.van) { if (blinks === 1) UI.toast('Um farol. <i>Sim.</i> Ela sempre está aqui.'); return; }
+        if (blinks === 1) UI.toast('<i>Os faróis piscam uma vez no escuro…</i>');
+        else if (blinks === 2) UI.toast('<i>“Você tá me ouvindo?” Um farol. Uma vez.</i>');
+        else if (blinks >= 3) {
+          const r = Core.unlockVan();
+          if (!r.ok) return;
+          UI.changed();
+          m.close();
+          UI.revealSecret('van');
+        }
+      });
+    }
   };
 
   /* ---------------------------------------------------------------- COMPARAR */

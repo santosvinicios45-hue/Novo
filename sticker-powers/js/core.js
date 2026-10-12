@@ -62,15 +62,18 @@
       coins: SP.PROG.startCoins,
       fragments: 0,
       essence: 0,
+      crystals: 0,
       tokens: { basic: 0, premium: 0 },
       owned: {},
       history: [],
       stats: {
         packsOpened: 0, battlesWon: 0, battlesLost: 0, skillsUsed: 0, advantageHits: 0,
-        evolutions: 0, levelUps: 0, streak: 0, bestStreak: 0, stickersObtained: 0, totalCoinsEarned: 0
+        evolutions: 0, levelUps: 0, streak: 0, bestStreak: 0, stickersObtained: 0, totalCoinsEarned: 0, duels: 0
       },
       campaign: { cleared: 0 },
       tower: { floor: 1, best: 0 },
+      nightmare: { cleared: 0 },
+      frames: { owned: ['classica'], equip: {} },
       bosses: {},          // bossId -> maior nível de desafio vencido (0 = nunca)
       missions: {},        // missionId -> true quando a recompensa foi resgatada
       daily: { date: '', freeClaimedAt: 0, counters: {}, claimed: {} },
@@ -93,6 +96,15 @@
     st.coins = clampInt(raw.coins, 0, 1e9, base.coins);
     st.fragments = clampInt(raw.fragments, 0, 1e9, 0);
     st.essence = clampInt(raw.essence, 0, 1e6, 0);
+    st.crystals = clampInt(raw.crystals, 0, 1e6, 0);
+    if (isObj(raw.nightmare)) st.nightmare.cleared = clampInt(raw.nightmare.cleared, 0, SP.STAGE_COUNT, 0);
+    if (isObj(raw.frames)) {
+      if (Array.isArray(raw.frames.owned)) raw.frames.owned.forEach(f => { if (SP.FRAME[f] && st.frames.owned.indexOf(f) < 0) st.frames.owned.push(f); });
+      if (isObj(raw.frames.equip)) Object.keys(raw.frames.equip).forEach(id => {
+        const f = raw.frames.equip[id];
+        if (SP.STICKER[id] && st.frames.owned.indexOf(f) >= 0) st.frames.equip[id] = f;
+      });
+    }
     if (isObj(raw.tokens)) {
       st.tokens.basic = clampInt(raw.tokens.basic, 0, 999, 0);
       st.tokens.premium = clampInt(raw.tokens.premium, 0, 999, 0);
@@ -285,6 +297,7 @@
     if (rw.coins) Core.addCoins(rw.coins);
     if (rw.fragments) SP.state.fragments += rw.fragments;
     if (rw.essence) SP.state.essence += rw.essence;
+    if (rw.crystals) SP.state.crystals += rw.crystals;
     if (rw.tokens) Object.keys(rw.tokens).forEach(k => { SP.state.tokens[k] = (SP.state.tokens[k] || 0) + rw.tokens[k]; });
   };
   Core.rewardText = function (rw) {
@@ -292,6 +305,7 @@
     if (rw.coins) parts.push(rw.coins + ' moedas');
     if (rw.fragments) parts.push(rw.fragments + ' fragmentos');
     if (rw.essence) parts.push(rw.essence + ' essência');
+    if (rw.crystals) parts.push(rw.crystals + ' cristais');
     if (rw.xp) parts.push(rw.xp + ' XP');
     if (rw.tokens) Object.keys(rw.tokens).forEach(k => parts.push(rw.tokens[k] + '× ' + (k === 'premium' ? 'Pacote Premium' : 'Pacote Básico')));
     if (rw.sticker) parts.push('Sticker ' + SP.STICKER[rw.sticker].name);
@@ -522,6 +536,8 @@
       case 'maxStars': return Object.keys(st.owned).reduce((m, id) => Math.max(m, st.owned[id].stars), 0);
       case 'cleared': return st.campaign.cleared;
       case 'towerBest': return st.tower.best;
+      case 'nightCleared': return st.nightmare.cleared;
+      case 'framesOwned': return st.frames.owned.length;
       case 'uniqueOwned': return Core.uniqueOwned();
       case 'bossKinds': return SP.BOSSES.filter(b => st.bosses[b.id] > 0).length;
       case 'bossKinds1': return SP.BOSSES.filter(b => !b.act && st.bosses[b.id] > 0).length;
@@ -626,6 +642,54 @@
     return Object.assign({ ok: true }, Core.addSticker('v', 'O Copo'));
   };
 
+  /* ---------------------------------------------------------------- a Van (segundo segredo) */
+  // Ela só aparece para quem já encontrou o V: é preciso falar com ela pelos faróis.
+  Core.unlockVan = function () {
+    if (SP.state.owned.van) return { ok: false, reason: 'already' };
+    if (!SP.state.owned.v) return { ok: false, reason: 'notYet' };
+    return Object.assign({ ok: true }, Core.addSticker('van', 'Os Faróis'));
+  };
+
+  /* ---------------------------------------------------------------- modo pesadelo */
+  Core.nightmareUnlocked = () => SP.state.campaign.cleared >= SP.STAGE_COUNT;
+  Core.nightmareSpec = function (n) {
+    const info = SP.stageInfo(n);
+    const level = SP.NIGHTMARE.levelFor(n);
+    const stars = SP.starsForLevel(level);
+    const mods = SP.NIGHTMARE.modsFor(n);
+    // chefes do Ato I são mais frágeis: no Pesadelo eles ficam à altura dos do Ato II
+    if (info.boss) return { n, level, mods, boss: info.boss.act ? { id: info.boss.id, level, hpMult: 1.3, atkMult: 1.1 } : { id: info.boss.id, level, hpMult: 3, atkMult: 1.5 } };
+    return { n, level, mods, enemies: info.enemies.map(id => ({ id, level, stars, asRarity: 'mythic' })) };
+  };
+
+  /* ---------------------------------------------------------------- molduras */
+  Core.frameUnlocked = f => SP.state.frames.owned.indexOf(f) >= 0;
+  Core.frameAvailable = function (f) {
+    const F = SP.FRAME[f];
+    if (!F) return false;
+    if (F.unlock) return !!SP.state.missions[F.unlock] || Core.missionStatus(SP.MISSIONS.find(m => m.id === F.unlock)).done;
+    return true;
+  };
+  Core.buyFrame = function (f) {
+    const F = SP.FRAME[f];
+    if (!F) return { ok: false, reason: 'Moldura inexistente.' };
+    if (Core.frameUnlocked(f)) return { ok: false, reason: 'Você já tem esta moldura.' };
+    if (F.unlock) {
+      if (!Core.frameAvailable(f)) return { ok: false, reason: 'Complete a conquista para liberar.' };
+    } else {
+      if (SP.state.crystals < F.cost) return { ok: false, reason: 'Cristais insuficientes. Ganhe no Modo Pesadelo.' };
+      SP.state.crystals -= F.cost;
+    }
+    SP.state.frames.owned.push(f);
+    return { ok: true };
+  };
+  Core.equipFrame = function (id, f) {
+    if (!SP.state.owned[id] || !Core.frameUnlocked(f)) return false;
+    if (f === 'classica') delete SP.state.frames.equip[id]; else SP.state.frames.equip[id] = f;
+    return true;
+  };
+  Core.frameOf = id => SP.state.frames.equip[id] || 'classica';
+
   /* ---------------------------------------------------------------- torre infinita */
   Core.towerSpec = function (floor) {
     const T = SP.TOWER;
@@ -660,10 +724,15 @@
    */
   Core.applyBattleResult = function (b, now) {
     const st = SP.state;
+    const rw = { coins: 0, fragments: 0, essence: 0, crystals: 0, xp: 0, levelUps: [], firstClear: false, sticker: null, tokens: null };
+    if (b.kind === 'duel') {
+      // duelo local: só conta a partida, sem recompensas, vitórias ou progresso de missões
+      st.stats.duels++;
+      return rw;
+    }
     st.stats.skillsUsed += b.skillsUsed || 0;
     st.stats.advantageHits += b.advantageHits || 0;
     if (b.skillsUsed) Core.dailyCount('skills', b.skillsUsed, now);
-    const rw = { coins: 0, fragments: 0, essence: 0, xp: 0, levelUps: [], firstClear: false, sticker: null, tokens: null };
     if (b.fled) {
       // desistir conta como derrota e não dá recompensa nenhuma
       st.stats.battlesLost++;
@@ -690,6 +759,12 @@
           rw.coins += r2.coins; rw.fragments += r2.fragments; rw.essence += r2.essence;
           if (r2.sticker) rw.sticker = r2.sticker;
         }
+      } else if (b.kind === 'nightmare') {
+        const r = SP.NIGHTMARE.rewards(b.stage);
+        const first = b.stage > st.nightmare.cleared;
+        rw.coins = r.coins; rw.crystals = r.crystals * (first ? 2 : 1); rw.fragments = 20 + b.stage; rw.xp = 150 + b.stage * 10;
+        rw.firstClear = first;
+        if (first) st.nightmare.cleared = b.stage;
       } else if (b.kind === 'tower') {
         const T = SP.TOWER, f = st.tower.floor;
         const r = T.rewards(f);
@@ -720,6 +795,7 @@
     Core.addCoins(rw.coins);
     st.fragments += rw.fragments;
     st.essence += rw.essence;
+    st.crystals += rw.crystals;
     if (rw.tokens) Core.giveReward({ tokens: rw.tokens });
     (b.team || []).forEach(id => {
       const before = st.owned[id] ? st.owned[id].level : 0;

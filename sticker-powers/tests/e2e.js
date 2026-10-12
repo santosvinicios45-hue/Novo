@@ -236,6 +236,58 @@ const assert = (c, m) => { if (!c) throw new Error(m || 'falhou'); };
     await p.evaluate(() => { SP.state.campaign.cleared = 20; SP.UI.changed(); });
   });
 
+  await step('segredo 2: três toques nos faróis da ficha do V revelam a Van', async () => {
+    await closeModals();
+    await p.evaluate(() => SP.UI.showDetail('v'));
+    for (let i = 0; i < 3; i++) { await p.click('.van-lights'); await p.waitForTimeout(150); }
+    await p.waitForSelector('.v-reveal', { timeout: 5000 });
+    assert((await state()).owned.van, 'Van não foi salva');
+    await closeModals();
+  });
+  await step('Modo Pesadelo: aba liberada após a fase 40 e batalha com regras', async () => {
+    await home();
+    await p.evaluate(() => { SP.state.campaign.cleared = 40; SP.UI.changed(); });
+    await p.click('[data-go=battles]');
+    await p.click('[data-t=nightmare]');
+    assert((await p.$$('.stage-node.night')).length === 40, 'esperava 40 pesadelos');
+    await p.click('.stage-node.night.next', { force: true });
+    await p.click('#nmGo');
+    await p.waitForSelector('.mod-tag');
+    await p.evaluate(() => { SP.state.settings.autoBattle = true; SP.state.settings.battleSpeed = 3; SP.UI.changed(); });
+    await p.click('#fight');
+    await p.waitForSelector('.mods-badge');
+    await p.waitForSelector('.result', { timeout: 180000 });
+    assert(await p.$('.xp-row'), 'sem barras de XP no resultado');
+    await shot('nightmare-result');
+    await closeModals();
+    await p.evaluate(() => { SP.state.settings.autoBattle = false; SP.state.settings.battleSpeed = 1; SP.state.campaign.cleared = 20; SP.UI.changed(); });
+  });
+  await step('Duelo Local: dois jogadores escolhem e jogam até o fim', async () => {
+    await home();
+    await p.evaluate(() => SP.UI.go('duel'));
+    for (let i = 0; i < 3; i++) await (await p.$$('#dPick .card'))[i].click();
+    await p.click('#dNext');
+    for (let i = 0; i < 3; i++) await (await p.$$('#dPick .card'))[i].click();
+    await p.click('#dNext');
+    await p.waitForSelector('#aAtk:not([disabled])', { timeout: 15000 });
+    await p.evaluate(() => { SP.state.settings.autoBattle = true; SP.state.settings.battleSpeed = 3; if (SP.UI.Battle.waiting) SP.UI.Battle.waiting('auto'); });
+    await p.waitForSelector('#dRe', { timeout: 180000 });
+    assert((await state()).stats.duels === 1, 'duelo não contado');
+    await closeModals();
+    await p.evaluate(() => { SP.state.settings.autoBattle = false; SP.state.settings.battleSpeed = 1; SP.UI.changed(); });
+  });
+  await step('Molduras: comprar com cristais e equipar na ficha', async () => {
+    await home();
+    await p.evaluate(() => { SP.state.crystals = 30; SP.UI.changed(); SP.UI.go('upgrades', { tab: 'frames' }); });
+    await p.click('[data-buy=neon]');
+    assert((await state()).frames.owned.indexOf('neon') >= 0, 'não comprou');
+    await p.evaluate(() => SP.UI.showDetail('brasinha'));
+    await p.click('[data-frame=neon]');
+    assert((await state()).frames.equip.brasinha === 'neon', 'não equipou');
+    assert(await p.$('.modal .card.lg.f-neon'), 'carta sem a moldura');
+    await closeModals();
+  });
+
   console.log('\nMelhorias');
   await step('treinar e evoluir', async () => {
     await home();

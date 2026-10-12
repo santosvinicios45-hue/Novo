@@ -320,6 +320,42 @@
     <text x="186" y="192" text-anchor="end" font-family="sans-serif" font-size="7" font-weight="700" fill="#ffe08a" opacity=".8">TERÇA · 7:19</text>`;
   };
 
+
+  /* ---------------------------------------------------------------- SECRETO: A VAN
+     A van do desenho de sábado de manhã, com flores que nunca existiram,
+     faróis que piscam sim/não e o rádio sempre na música certa. */
+  D.van = G => {
+    const flower = (x, y, r, c) => { let p = ''; for (let i = 0; i < 5; i++) { const a = Math.PI * 2 * i / 5; p += `<circle cx="${(x + Math.cos(a) * r).toFixed(1)}" cy="${(y + Math.sin(a) * r).toFixed(1)}" r="${r * 0.7}" fill="${c}"/>`; } return p + `<circle cx="${x}" cy="${y}" r="${r * 0.55}" fill="#ffe14d"/>`; };
+    return `
+    <linearGradient id="${G('g')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2418"/><stop offset="1" stop-color="#0e0c08"/></linearGradient>
+    <linearGradient id="${G('b')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fe0c8"/><stop offset=".55" stop-color="#3fb8a0"/><stop offset="1" stop-color="#1f7a6a"/></linearGradient>
+    <linearGradient id="${G('beam')}" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#fff4cf" stop-opacity=".75"/><stop offset="1" stop-color="#fff4cf" stop-opacity="0"/></linearGradient>
+    <rect width="200" height="200" fill="url(#${G('g')})"/>
+    <rect x="0" y="150" width="200" height="50" fill="#3a352a"/><path d="M0 150 L200 150" stroke="#5a5240" stroke-width="2"/>
+    <circle cx="100" cy="20" r="40" fill="#ffd36a" opacity=".12" filter="url(#BL)"/><path d="M92 0 L92 12 L108 12 L108 0" fill="#5a5240"/><ellipse cx="100" cy="16" rx="10" ry="4" fill="#ffe8a8"/>
+    <path d="M30 108 L0 92 L0 136Z" fill="url(#${G('beam')})"/>
+    <ellipse cx="100" cy="164" rx="80" ry="8" fill="#000" opacity=".45"/>
+    <path d="M24 150 L24 86 C24 66 34 56 54 56 L156 56 C172 56 180 66 180 84 L180 150Z" fill="url(#${G('b')})" stroke="#0e3a32" stroke-width="3"/>
+    <path d="M24 112 L180 112" stroke="#f2e6c8" stroke-width="10"/><path d="M24 112 L180 112" stroke="#d8c8a0" stroke-width="2" transform="translate(0 4)"/>
+    <path d="M30 86 C30 72 38 64 54 64 L70 64 L70 100 L30 100Z" fill="#cfefff" stroke="#0e3a32" stroke-width="2.5"/>
+    <path d="M34 92 L46 70" stroke="#fff" stroke-width="3" opacity=".7"/>
+    <rect x="78" y="64" width="40" height="36" rx="5" fill="#a8d8e8" stroke="#0e3a32" stroke-width="2.5"/>
+    <rect x="124" y="64" width="48" height="36" rx="5" fill="#a8d8e8" stroke="#0e3a32" stroke-width="2.5"/>
+    <path d="M120 64 L120 150" stroke="#0e3a32" stroke-width="2"/>
+    ${flower(96, 132, 7, '#ff6fb1')}${flower(130, 128, 6, '#ff9a1a')}${flower(160, 136, 7, '#b05cff')}${flower(62, 134, 5, '#3b8bff')}${flower(146, 84, 6, '#ff6fb1')}
+    <path d="M104 132 C112 140 120 138 124 130 M138 128 C146 122 152 128 154 134" stroke="#2f8a3a" stroke-width="2" fill="none"/>
+    <rect x="20" y="104" width="10" height="20" rx="3" fill="#c4ccd8"/>
+    <circle cx="26" cy="96" r="6" fill="#fff4cf"/><circle cx="26" cy="96" r="12" fill="#fff4cf" opacity=".35" filter="url(#BL)"/>
+    <rect x="16" y="140" width="22" height="8" rx="3" fill="#c4ccd8" stroke="#555" stroke-width="1"/>
+    <circle cx="58" cy="152" r="16" fill="#1b1b1b"/><circle cx="58" cy="152" r="7" fill="#c4ccd8"/>
+    <circle cx="150" cy="152" r="16" fill="#1b1b1b"/><circle cx="150" cy="152" r="7" fill="#c4ccd8"/>
+    <path d="M98 40 C102 34 108 34 110 38 M114 30 C120 22 128 22 130 28" stroke="#ffe08a" stroke-width="2" fill="none"/>
+    <circle cx="96" cy="42" r="3" fill="#ffe08a"/><path d="M99 42 L99 32" stroke="#ffe08a" stroke-width="1.6"/>
+    <circle cx="126" cy="34" r="3" fill="#ffe08a"/><path d="M129 34 L129 24 L136 22 L136 32" stroke="#ffe08a" stroke-width="1.6" fill="none"/><circle cx="133" cy="32" r="3" fill="#ffe08a"/>
+    <path d="M150 40 C154 36 160 36 162 40" stroke="#ffe08a" stroke-width="1.6" fill="none" opacity=".7"/>
+    <path d="M172 150 Q182 140 186 150" stroke="#f2e6c8" stroke-width="2" fill="none" opacity=".4"/>`;
+  };
+
   /* ---------------------------------------------------------------- chefes */
   B.hidra = G => {
     let necks = '';

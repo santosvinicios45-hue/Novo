@@ -141,7 +141,11 @@
         UI.$('.hint', ov).textContent = bestRank >= 4 ? 'Uma energia poderosa está escapando...!' : 'Abrindo...';
         for (let i = 0; i < 5; i++) { UI.sfx('packShake'); await UI.sleep(140); }
         if (bestRank >= 4) { SP.FX.at(sp, { colors: SP.FX.RARITY_COLORS[SP.RARITIES[bestRank].id], count: 30, speed: 180 }); await UI.sleep(450); }
-        sp.classList.remove('charging'); sp.classList.add('burst');
+        sp.classList.remove('charging');
+        // o pacote rasga ao meio
+        const pv = sp.querySelector('.pack-visual');
+        ['top', 'bot'].forEach(k => { const h = pv.cloneNode(true); h.classList.add('pack-half', k); sp.appendChild(h); });
+        sp.classList.add('torn');
       }
       UI.sfx('packOpen');
       SP.FX.flash(bestRank >= 4 ? SP.RARITIES[bestRank].color : '#fff', 500);
@@ -157,7 +161,8 @@
         <div class="reveal-row">${res.results.map((r, i) => {
           const s = SP.STICKER[r.id], R = SP.RARITY[s.rarity];
           const glow = R.rank >= 2 ? `glow ${R.rank >= 4 ? 'hard' : ''}` : '';
-          return `<div class="flip" data-i="${i}"><div class="inner">
+          const n = res.results.length, off = (i - (n - 1) / 2);
+          return `<div class="flip ${skipAll ? '' : 'fly-in'}" data-i="${i}" style="--fx:${-off * 120}px;--fr:${off * 25}deg;animation-delay:${i * 0.12}s;--rc:${R.rank >= 6 ? '#b9fffb' : R.color}">${R.rank >= 4 ? '<div class="rays"></div>' : ''}<div class="inner">
             <div class="face back ${glow}" style="--gc:${R.rank >= 6 ? '#b9fffb' : R.color}"><div class="bk-logo">STICKER<br>POWERS<br>?</div></div>
             <div class="face front">${UI.card(r.id, { isNew: r.isNew, showCount: false })}</div></div>
             <div class="result-tag ${r.isNew ? 'new' : 'dup'}">${r.isNew ? '★ NOVO NA COLEÇÃO!' : 'Duplicata → +' + r.frags + ' fragmentos'}</div></div>`;

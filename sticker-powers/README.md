@@ -23,8 +23,9 @@ Depois acesse `http://localhost:8080`.
 4. Vitórias dão **moedas, XP e fragmentos**. Duplicatas de pacotes viram **fragmentos**.
 5. Em **Melhorias**: treine (moedas → XP), **evolua** até 5 estrelas (nível máximo + moedas + fragmentos; as estrelas 4 e 5 também pedem Essência) ou use a **Forja** para criar um sticker que falta.
 6. Derrote os **8 chefes** (a cada 5 fases) para ganhar Essência e um **sticker exclusivo**. Depois, desafie-os em níveis cada vez mais altos na aba **Chefes**.
-7. Zerou? Suba a **Torre Infinita**: andares sem fim, chefe a cada 10 andares, checkpoints e recorde salvo.
-8. Resgate recompensas em **Missões** (diárias e conquistas).
+7. Zerou? Encare o **Modo Pesadelo** (as 40 fases com inimigos muito mais fortes e regras especiais), suba a **Torre Infinita** ou chame alguém para um **Duelo Local** no mesmo aparelho.
+8. Use os **Cristais** do Pesadelo para comprar **Molduras** animadas para as cartas.
+9. Resgate recompensas em **Missões** (diárias e conquistas).
 
 ## Sistemas
 
@@ -38,6 +39,10 @@ Depois acesse `http://localhost:8080`.
 | **Combate** | Turnos por velocidade (com linha do tempo), energia, queimadura, veneno acumulável, congelar, atordoar, enfraquecer, lentidão, escudo, espinhos, provocação, esquiva, cura, regeneração, reviver, roubo de energia, turno extra e atraso de turno. IA escolhe alvos por vantagem elemental e vida baixa, cura aliados feridos e se protege. A partir da rodada 15, a “Fúria da Arena” aumenta o dano para evitar empates eternos |
 | **Chefes** | Ato I: Dragão do Apocalipse, Imperador do Vazio, Deusa do Tempo e Colosso das Sombras. Ato II: Hidra Abissal, Rainha das Tempestades, Titã de Aço e Ômega, o Devorador. Todos com tela de apresentação, 2 ações por rodada, padrão de ataques próprio, fase de fúria abaixo de 50% de vida, desafios repetíveis de nível crescente e recompensas exclusivas |
 | **Evolução** | Níveis 1–50 (limite de 10 por estrela, até 5 estrelas). Estrela 2 desbloqueia o **talento elemental** (ex.: Fogo queima com ataques normais, Luz regenera) e o brilho holográfico; estrela 3 desperta a habilidade (+25% de poder, custo −1) e adiciona uma aura animada; estrela 4 dá moldura de cristal; estrela 5 é a **Forma Suprema** (+50% de poder na habilidade e coroa de luz). Custos e ganhos são mostrados antes de confirmar |
+| **Modo Pesadelo** | Liberado ao vencer a fase 40: as 40 fases voltam com inimigos Nv 44–58 que lutam com força de Mítico e 1–2 regras por fase (Fúria Precoce, Espinhos, Vampirismo, Ferida Aberta, Blindados, Ar Tóxico, Gigantes, Velozes, Inimigos Carregados). Dá Cristais, em dobro na 1ª vitória |
+| **Duelo Local** | 2 jogadores no mesmo aparelho, com modo Equilibrado (todos no Nv 30, 3★) ou com os níveis da coleção. Sem recompensas |
+| **Molduras** | 10 molduras animadas (Neon, Ouro Real, Chamas, Cristal de Gelo, Galáxia, Pixel Retrô, Aurora…), escolhidas por sticker na ficha. Duas só saem por conquistas |
+| **Animações** | Projéteis com rastro de cada elemento, cortes nos ataques, cut-in estilo anime nas habilidades e golpes de chefe, pacote que rasga ao meio, cartas que voam do pacote, raios de luz atrás de Lendários ou melhores, barras de XP que enchem no resultado e ícones de elementos flutuando na tela inicial |
 | **Torre Infinita** | Pós-jogo sem fim: inimigos cada vez mais fortes, chefe a cada 10 andares (com Essência e Pacote Premium), checkpoints a cada 10 andares e recorde salvo |
 | **Missões** | 4 diárias (reiniciam à meia-noite pelo relógio do dispositivo) e 30 conquistas, incluindo Ato II, Torre e álbum completo, com recompensas em moedas, fragmentos, essência e pacotes |
 | **Áudio** | Música procedural (menu, batalha, chefe) e efeitos para cliques, pacotes, raridades, golpes, cada elemento, cura, vitória, derrota, nível e evolução. Música, efeitos e volume são ajustáveis |
@@ -45,7 +50,7 @@ Depois acesse `http://localhost:8080`.
 
 ### Um segredo
 
-Existe um sticker que não está no álbum, não sai em pacotes, não pode ser forjado e não aparece nem como silhueta. Ele vem de outra história. Quem o encontrar vai saber.
+Existem stickers que não estão no álbum, não saem em pacotes, não podem ser forjados e não aparecem nem como silhueta. Eles vêm de outra história. Quem os encontrar vai saber.
 
 ### Sobre raridade
 
@@ -65,7 +70,7 @@ Só existem moedas fictícias, sem compras reais nem anúncios. Uma vitória rá
 
 ```bash
 cd sticker-powers
-node tests/run-tests.js      # 64 testes de lógica (sem navegador)
+node tests/run-tests.js      # 71 testes de lógica (sem navegador)
 ```
 Cobrem dados, as 40 fases, a Torre Infinita, a evolução até 5 estrelas, probabilidades (incluindo 200 mil sorteios comparados com as chances exibidas), garantia do Premium, pacote diário, duplicatas, evolução, forja, cada efeito de combate, vantagens elementais, chefes, IA, mil batalhas simuladas, recompensas, missões diárias, salvamento, save corrompido e exportar/importar.
 

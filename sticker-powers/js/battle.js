@@ -17,6 +17,11 @@
     const s = SP.STICKER[spec.id];
     const stars = spec.stars || 1;
     const st = SP.Core.statsFor(spec.id, spec.level || 1, stars);
+    // Pesadelo: o inimigo luta com a força de outra raridade (ex.: comum como mítico)
+    if (spec.asRarity && SP.RARITY[spec.asRarity].mult > SP.RARITY[s.rarity].mult) {
+      const k = SP.RARITY[spec.asRarity].mult / SP.RARITY[s.rarity].mult;
+      st.hp = Math.round(st.hp * k); st.atk = Math.round(st.atk * k); st.def = Math.round(st.def * k);
+    }
     return {
       uid: side[0] + idx, side, id: spec.id, name: s.name, el: s.el, rarity: s.rarity,
       level: spec.level || 1, stars, isBoss: false,
@@ -54,12 +59,38 @@
       log: []
     };
     opts.players.forEach((p, i) => b.units.push(makeUnit(p, 'player', i)));
-    if (opts.boss) b.units.push(makeBoss(opts.boss.id, opts.boss.level, 0));
+    if (opts.boss) {
+      const bu = makeBoss(opts.boss.id, opts.boss.level, 0);
+      if (opts.boss.hpMult) { bu.maxHp = Math.round(bu.maxHp * opts.boss.hpMult); bu.hp = bu.maxHp; }
+      if (opts.boss.atkMult) bu.atk = Math.round(bu.atk * opts.boss.atkMult);
+      b.units.push(bu);
+    }
     else opts.enemies.forEach((e, i) => b.units.push(makeUnit(e, 'enemy', i)));
     // talento do Metal: escudo inicial
     b.units.forEach(u => { if (u.talent && u.el === 'metal') u.shield = Math.round(u.maxHp * 0.12); });
+    // V e a Van juntos: ela liga o rádio e ele começa com energia cheia
+    ['player', 'enemy'].forEach(side => {
+      const team = b.units.filter(u => u.side === side);
+      const v = team.find(u => u.id === 'v');
+      if (v && team.some(u => u.id === 'van')) { v.en = v.maxEn; b.vanBond = true; }
+    });
+    applyMods(b, opts.mods || []);
     return b;
   };
+
+  /* ---------------------------------------------------------------- modificadores (Modo Pesadelo) */
+  function applyMods(b, mods) {
+    b.mods = {};
+    mods.forEach(m => { b.mods[m] = true; });
+    const foes = b.units.filter(u => u.side === 'enemy'), mine = b.units.filter(u => u.side === 'player');
+    if (b.mods.furia) b.furyRound = 5;
+    if (b.mods.espinhos) foes.forEach(u => u.statuses.push({ s: 'reflect', t: 999, v: 0.2 }));
+    if (b.mods.pressa) foes.forEach(u => { u.en = u.maxEn; });
+    if (b.mods.blindados) foes.forEach(u => { u.shield += Math.round(u.maxHp * 0.25); });
+    if (b.mods.veneno) mine.forEach(u => u.statuses.push({ s: 'poison', t: 3, v: 2 }));
+    if (b.mods.gigantes) foes.forEach(u => { u.maxHp = Math.round(u.maxHp * 1.4); u.hp = u.maxHp; });
+    if (b.mods.velozes) foes.forEach(u => { u.spd = Math.round(u.spd * 1.3 * 10) / 10; });
+  }
 
   /* ---------------------------------------------------------------- consultas */
   Battle.unit = (b, uid) => b.units.find(u => u.uid === uid);
@@ -107,7 +138,7 @@
 
   /** A partir da rodada 15, todo dano cresce 15% por rodada (evita empates eternos). */
   Battle.FURY_ROUND = 15;
-  Battle.arenaFury = b => 1 + Math.max(0, b.round - Battle.FURY_ROUND) * 0.15;
+  Battle.arenaFury = b => 1 + Math.max(0, b.round - (b.furyRound || Battle.FURY_ROUND)) * 0.15;
 
   /* ---------------------------------------------------------------- fila de turnos */
   function buildQueue(b) {
@@ -159,6 +190,7 @@
   /* ---------------------------------------------------------------- dano e cura */
   function heal(b, u, amount, ev) {
     if (!u.alive || amount <= 0) return 0;
+    if (b.mods && b.mods.cura && u.side === 'player') amount *= 0.5;
     const real = Math.min(u.maxHp - u.hp, Math.round(amount));
     u.hp += real;
     ev.push({ t: 'heal', u: u.uid, amount: real, hp: u.hp });
@@ -227,6 +259,7 @@
     raw *= (crit ? 1.6 : 1) * (0.92 + b.rng() * 0.16) * Battle.arenaFury(b);
     if (att.side === 'player' && mult > 1) b.stats.advantageHits++;
     const dealt = applyDamage(b, att, tgt, raw, ev, { crit, mult, el: att.el });
+    if (b.mods && b.mods.vampiros && att.side === 'enemy' && dealt > 0) heal(b, att, dealt * 0.25, ev);
     // espinhos / talento da Natureza
     let refl = 0;
     const rs = getS(tgt, 'reflect');
@@ -431,7 +464,7 @@
         }
         buildQueue(b);
         ev.push({ t: 'round', n: b.round });
-        if (b.round === Battle.FURY_ROUND + 1) ev.push({ t: 'log', text: 'FÚRIA DA ARENA! Todo dano aumenta a cada rodada.' });
+        if (b.round === (b.furyRound || Battle.FURY_ROUND) + 1) ev.push({ t: 'log', text: 'FÚRIA DA ARENA! Todo dano aumenta a cada rodada.' });
       }
       const cand = Battle.unit(b, b.queue.shift());
       if (cand && cand.alive) u = cand;
