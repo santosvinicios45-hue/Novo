@@ -369,8 +369,48 @@ function drawHumanoid(c, s, dir, frame) {
 }
 
 // gera e guarda sprites de um personagem: Sprites.human(spec, key) -> {down:[4], up:[4], left:[4], right:[4]}
+// desenha um sprite de personagem com os pés em (x, y); sentado corta as pernas
+function drawChar(c, img, x, y, sitting) {
+  const fy = img.footY || 35;
+  if (sitting) { const sh = Math.round(img.height * 0.72); c.drawImage(img, 0, 0, img.width, sh, Math.round(x - img.width / 2), Math.round(y - fy + 6), img.width, sh); }
+  else c.drawImage(img, Math.round(x - img.width / 2), Math.round(y - fy));
+}
 const Sprites = {
+  // o V desenhado pelo autor (assets/v_sprites.png): linhas = baixo, esquerda, direita, cima; colunas = passo A, parado, passo B
+  sheet(key, img, terno) {
+    const ck = 'S:' + key;
+    if (Art.cache.has(ck)) return Art.cache.get(ck);
+    const FW = img.width / 3, FH = img.height / 4;
+    const rows = ['down', 'left', 'right', 'up'];
+    const set = { down: [], up: [], left: [], right: [], blink: [] };
+    const order = [1, 0, 1, 2];
+    const cells = {};
+    rows.forEach((d, r) => {
+      cells[d] = [0, 1, 2].map(col => {
+        const [c, x] = Art.mk(FW + 2, FH + 2);
+        x.drawImage(img, col * FW, r * FH, FW, FH, 1, 1, FW, FH);
+        if (terno) {
+          const id = x.getImageData(0, 0, c.width, c.height), dd = id.data;
+          for (let i = 0; i < dd.length; i += 4) {
+            if (!dd[i + 3]) continue;
+            const R = dd[i], Gg = dd[i + 1], B = dd[i + 2], mx = Math.max(R, Gg, B), mn = Math.min(R, Gg, B), l = (R + Gg + B) / 3;
+            if (Gg >= B + 10 && R >= B + 4 && mx - mn > 16 && l < 150 && !(R > Gg + 20)) { const v = 22 + l * 0.42; dd[i] = v; dd[i + 1] = v; dd[i + 2] = v + 4; }
+            else if (B > R + 8 && l < 110) { const v = 18 + l * 0.4; dd[i] = v; dd[i + 1] = v; dd[i + 2] = v + 3; }
+          }
+          x.putImageData(id, 0, 0);
+        }
+        Art.outline(c, '#120e0c');
+        c.footY = FH;
+        return c;
+      });
+    });
+    for (const d of rows) for (const o of order) set[d].push(cells[d][o]);
+    set.blink.push(cells.down[1]);
+    Art.cache.set(ck, set);
+    return set;
+  },
   human(key, spec) {
+    if (spec && spec.sheet && IMG[spec.sheet]) return this.sheet(key, IMG[spec.sheet], spec.terno);
     const ck = 'H:' + key;
     if (Art.cache.has(ck)) return Art.cache.get(ck);
     const set = { down: [], up: [], left: [], right: [], blink: [] };
@@ -573,6 +613,7 @@ const V_HEAD = {
   ],
 };
 CAST.V.headMap = V_HEAD; CAST.V_terno.headMap = V_HEAD;
+CAST.V.sheet = 'vsheet'; CAST.V_terno.sheet = 'vsheet'; CAST.V_terno.terno = true;
 CAST.Gustavo_fuma = Object.assign({}, CAST.Gustavo, {
   smile: false, extra: (c, d, f, o) => {
     if (d === 'down') { o.r(o.X(15), o.ty + 4, 1, 1, '#f2efe8'); o.p(o.X(15), o.ty + 3, '#ff7a3a'); }

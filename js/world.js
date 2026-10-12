@@ -265,12 +265,12 @@ const FX = {
   },
   ring(x, y, color, size = 30, life = 0.5) { this.add({ type: 'ring', x, y, vx: 0, vy: 0, life, color, size }); },
   // as "brasas" do poder do V (como na arte de referência)
+  // poeira de luz: poucos pontos claros que sobem devagar (o poder dele é silencioso)
   ember(x, y, n = 1) {
-    for (let i = 0; i < n; i++) this.add({ x: x + U.rand(-5, 5), y: y + U.rand(-6, 6), vx: U.rand(-6, 6), vy: U.rand(-28, -10), life: U.rand(0.5, 1.1), color: U.pick(['#ffb347', '#ff8a3d', '#ffd27a', '#e86a3a']), size: 1, ignoreFreeze: true });
+    n = Math.ceil(n * 0.35);
+    for (let i = 0; i < n; i++) this.add({ x: x + U.rand(-6, 6), y: y + U.rand(-6, 6), vx: U.rand(-3, 3), vy: U.rand(-10, -4), life: U.rand(0.5, 0.9), color: U.pick(['#fff1d0', '#ffe2b0', '#f6d9a8']), size: 1, ignoreFreeze: true });
   },
-  wisp(x, y, n = 1) {
-    for (let i = 0; i < n; i++) this.add({ type: 'smoke', x: x + U.rand(-6, 6), y: y + U.rand(-4, 4), vx: U.rand(-4, 4), vy: U.rand(-14, -6), life: U.rand(0.6, 1.2), color: '#2a221e', size: U.rand(2, 4), ignoreFreeze: true });
-  },
+  wisp() { },
 };
 
 // =====================================================================
@@ -310,7 +310,8 @@ class Player extends Ent {
     this.blinkT -= dt; if (this.blinkT < -0.12) this.blinkT = U.rand(2, 5);
     this.afterimages = this.afterimages.filter(a => (a.life -= dt) > 0);
     // poder ativo: brasas e fumaça escura em volta do corpo
-    if (this.held || G.frozen > 0 || this.glowT > 0) { if (Math.random() < 0.5) FX.ember(this.x, this.y - 14); if (Math.random() < 0.25) FX.wisp(this.x, this.y - 6); }
+    const want = (this.held || this.glowT > 0) ? 1 : 0;
+    this.aura = U.lerp(this.aura || 0, want, Math.min(1, dt * 6));
     if (this.glowT > 0) this.glowT -= dt;
   }
   frame() { return this.moving ? (Math.floor(this.anim) % 4) : 0; }
@@ -320,12 +321,17 @@ class Player extends Ent {
     return set[this.dir][this.frame()];
   }
   draw(c) {
-    for (const a of this.afterimages) { c.globalAlpha = a.life * 1.5 * 0.5; c.drawImage(a.img, Math.round(a.x - 11), Math.round(a.y - 35)); }
+    for (const a of this.afterimages) { c.globalAlpha = a.life * 0.7; drawChar(c, a.img, a.x, a.y); }
     c.globalAlpha = 1;
     // sombra
     c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(Math.round(this.x), Math.round(this.y), 6, 2, 0, 0, 7); c.fill();
-    if (this.sitting) { c.drawImage(this.sprite(), 0, 0, 22, 26, Math.round(this.x - 11), Math.round(this.y - 29), 22, 26); return; }
-    c.drawImage(this.sprite(), Math.round(this.x - 11), Math.round(this.y - 35));
+    if (this.aura > 0.02) { // poder em uso: um brilho morno e discreto nas mãos, sem fogo
+      const [hx, hy] = this.facingPoint(6);
+      const g = c.createRadialGradient(hx, hy - 6, 0, hx, hy - 6, 16);
+      g.addColorStop(0, `rgba(255,214,150,${0.35 * this.aura})`); g.addColorStop(1, 'rgba(255,214,150,0)');
+      c.fillStyle = g; c.fillRect(hx - 16, hy - 22, 32, 32);
+    }
+    drawChar(c, this.sprite(), this.x, this.y, this.sitting);
   }
   facingPoint(d = 12) { const [vx, vy] = U.dirVec(this.dir); return [this.x + vx * d, this.y - 4 + vy * d]; }
 }
@@ -385,8 +391,7 @@ class NPC extends Ent {
     let img = set[this.dir][f];
     if (!this.moving && this.blinkT < 0 && this.dir === 'down') img = set.blink[0];
     c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(Math.round(this.x), Math.round(this.y), 6, 2, 0, 0, 7); c.fill();
-    if (this.sitting) c.drawImage(img, 0, 0, 22, 26, Math.round(this.x - 11), Math.round(this.y - 29), 22, 26);
-    else c.drawImage(img, Math.round(this.x - 11), Math.round(this.y - 35));
+    drawChar(c, img, this.x, this.y, this.sitting);
     if (this.afterDraw) this.afterDraw(c);
     if (this.emote) drawEmote(c, this.x, this.y - 38, this.emote);
   }
@@ -431,7 +436,7 @@ class Item extends Ent {
       const tx = fx, ty = fy + 6;
       this.x = U.lerp(this.x, tx, 0.25); this.y = U.lerp(this.y, ty, 0.25);
       this.z = U.lerp(this.z, 14 + Math.sin(G.t * 3) * 2, 0.2);
-      if (Math.random() < 0.4) FX.ember(this.x, this.y - this.z);
+      if (Math.random() < 0.06) FX.ember(this.x, this.y - this.z, 2);
       return;
     }
     if (this.suspended) { this.vz = 0; return; }
@@ -473,8 +478,13 @@ class Item extends Ent {
   }
   draw(c) {
     if (this.z > 0 || G.player.held === this) { c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(Math.round(this.x), Math.round(this.y), 4, 1.5, 0, 0, 7); c.fill(); }
-    const hl = G.player.held === this || this === Powers.tkTarget;
-    if (hl) { c.globalAlpha = 0.5 + Math.sin(G.t * 8) * 0.2; c.fillStyle = '#ffb347'; c.fillRect(Math.round(this.x) - 5, Math.round(this.y - this.z) - 9, 11, 11); c.globalAlpha = 1; }
+    const held = G.player.held === this, tgt = this === Powers.tkTarget;
+    if (held || tgt) {
+      const cx = this.x, cy = this.y - this.z - 3, r = held ? 10 : 7;
+      const g = c.createRadialGradient(cx, cy, 0, cx, cy, r);
+      g.addColorStop(0, `rgba(255,236,200,${held ? 0.45 : 0.18 + Math.sin(G.t * 4) * 0.08})`); g.addColorStop(1, 'rgba(255,236,200,0)');
+      c.fillStyle = g; c.fillRect(cx - r, cy - r, r * 2, r * 2);
+    }
     ItemArt.draw(c, this.type, Math.round(this.x), Math.round(this.y - this.z), this.broken, G.t);
     if (this.suspendDrop) { c.fillStyle = '#9fd8f0'; c.fillRect(Math.round(this.x) + 1, Math.round(this.y - this.z) + 2, 1, 2); }
   }

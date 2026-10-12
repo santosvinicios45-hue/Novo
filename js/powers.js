@@ -88,7 +88,7 @@ const Powers = {
     if (!t) { Audio2.sfx('deny'); return; }
     pl.held = t; t.suspended = false; t.gentle = false; t.vx = t.vy = 0;
     Audio2.sfx('tk'); this.use('tk');
-    FX.ring(t.x, t.y - 4, '#ffb347', 14, 0.4);
+    FX.ring(t.x, t.y - 4, 'rgba(255,236,200,.6)', 12, 0.35);
     Story.emit('lift', t);
   },
   place() {
@@ -120,9 +120,9 @@ const Powers = {
     }
     if (best < 10) { Audio2.sfx('deny'); return; }
     pl.afterimages.push({ x: pl.x, y: pl.y, img: pl.sprite(), life: 0.45 });
-    FX.burst(pl.x, pl.y - 14, 14, ['#ffb347', '#2a221e', '#ffd27a'], 40, 0.5);
+    FX.burst(pl.x, pl.y - 14, 14, ['#fff1d0', '#e8dcc8'], 26, 0.4);
     pl.x += vx * best; pl.y += vy * best;
-    FX.burst(pl.x, pl.y - 14, 10, ['#ffb347', '#ffd27a'], 30, 0.4);
+    FX.burst(pl.x, pl.y - 14, 10, ['#fff1d0', '#ffe2b0'], 20, 0.35);
     Audio2.sfx('blink'); this.use('blink');
     Story.emit('blink');
   },

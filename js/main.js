@@ -12,7 +12,7 @@ const CHAPTER_NAMES = { 1: 'O Copo', 2: 'Testes Domésticos', 3: 'A Van', 4: 'Gu
 const Game = {
   titleSel: 0, titleMode: 'main',
   async boot() {
-    await Promise.all([loadImg('retrato', 'assets/v_retrato.png'), loadImg('titulo', 'assets/titulo.png')]);
+    await Promise.all([loadImg('retrato', 'assets/v_retrato.png'), loadImg('titulo', 'assets/titulo.png'), loadImg('vsheet', VSHEET_DATA)]);
     UI.init();
     if (Save.getPref('muted')) { Audio2.muted = true; }
     // atalho de teste: ?cap=N

@@ -111,7 +111,7 @@ const Mini = {
           ctx.quadraticCurveTo((cx + f.x) / 2 + Math.sin(t * 6 + f.a) * strain * 8, (cy + f.y) / 2, f.x, f.y); ctx.stroke();
         }
         // V no centro
-        ctx.drawImage(vs.down[0], 0, 0, 22, 26, cx - 11, cy - 26, 22, 26);
+        drawChar(ctx, vs.down[0], cx, cy, true);
         ctx.globalAlpha = 0.3 + Math.sin(t * 5) * 0.1; ctx.fillStyle = '#ffb347'; ctx.beginPath(); ctx.arc(cx, cy - 12, 16, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
         for (const f of FR) if (!f.gone && f.x !== undefined) drawIcon(f, f.x, f.y, f.lost ? 0.4 + Math.sin(t * 20) * 0.3 : 1);
         // retícula

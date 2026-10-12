@@ -18,10 +18,11 @@ const glow = (id, v) => { const p = World.prop(id); if (p) p.glow = v; };
 const flag = (k, v) => { if (v === undefined) return !!G.flags[k]; G.flags[k] = v; };
 
 async function walkV(x, y, speed = 1) {
-  const p = G.player;
+  const p = G.player; let t = 0, lx = p.x, ly = p.y, stuck = 0;
   await Wait.until(() => {
     const dx = x - p.x, dy = y - p.y, d = Math.hypot(dx, dy);
-    if (d < 2) { p.scripted = null; return true; }
+    t += G.dt; stuck = (Math.abs(p.x - lx) + Math.abs(p.y - ly) < 0.05) ? stuck + G.dt : 0; lx = p.x; ly = p.y;
+    if (d < 2 || t > 4 || stuck > 0.4) { if (d >= 2) { p.x = x; p.y = y; } p.scripted = null; return true; }
     p.scripted = { ax: dx / d * speed, ay: dy / d * speed };
     return false;
   });
@@ -281,7 +282,7 @@ function populateRua(mode) {
 
 // páginas soltas pelo mundo
 const PAGE_SPOTS = {
-  apto: [['p1', T(19) + 8, T(6) + 8], ['p3', T(2) + 8, T(15) + 4]],
+  apto: [['p1', T(16) + 8, T(7) + 4], ['p3', T(2) + 8, T(15) + 4]],
   rua: [['p2', T(52), T(1) + 10], ['p4', T(61), T(20)], ['p5', T(1) + 8, T(26)]],
   mansao: [['p6', T(4), T(13)], ['p7', T(33), T(19)]],
   cemiterio: [],
