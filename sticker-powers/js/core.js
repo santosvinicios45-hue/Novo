@@ -500,7 +500,8 @@
   };
 
   /* ---------------------------------------------------------------- coleção */
-  Core.uniqueOwned = () => Object.keys(SP.state.owned).length;
+  // só conta o álbum oficial: o sticker secreto é um extra
+  Core.uniqueOwned = () => SP.STICKERS.filter(s => SP.state.owned[s.id]).length;
   Core.completion = () => Core.uniqueOwned() / SP.STICKERS.length;
   Core.elementProgress = function (el) {
     const all = SP.STICKERS.filter(s => s.el === el);
@@ -614,6 +615,15 @@
     }
     const stars = SP.starsForLevel(lvl);
     return picks.map(id => ({ id, level: Math.max(1, lvl - 1 + Math.floor(r() * 2)), stars }));
+  };
+
+  /* ---------------------------------------------------------------- o segredo do copo */
+  // O copo só para depois que o Devorador (fase 40) é derrotado.
+  Core.vReady = () => SP.state.campaign.cleared >= SP.STAGE_COUNT;
+  Core.unlockV = function () {
+    if (SP.state.owned.v) return { ok: false, reason: 'already' };
+    if (!Core.vReady()) return { ok: false, reason: 'notYet' };
+    return Object.assign({ ok: true }, Core.addSticker('v', 'O Copo'));
   };
 
   /* ---------------------------------------------------------------- torre infinita */

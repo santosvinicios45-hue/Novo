@@ -186,7 +186,7 @@
     return `<div class="${cls}" data-id="${id}" style="--elc:${E.c1}" role="button" tabindex="0" aria-label="${locked ? 'Sticker desconhecido' : UI.esc(s.name)}">
       <div class="frame">
         <div class="art-box">${Art.sticker(id)}</div>
-        <div class="c-top"><span class="c-num">#${String(s.num).padStart(2, '0')}</span><span class="c-el">${Art.elementIcon(s.el, 14)}</span></div>
+        <div class="c-top"><span class="c-num">#${s.hidden ? 'V' : String(s.num).padStart(2, '0')}</span><span class="c-el">${Art.elementIcon(s.el, 14)}</span></div>
         ${!locked && o.showCount !== false && own && own.count > 1 ? `<span class="c-count">×${own.count}</span>` : ''}
         ${!locked && own && own.fav ? `<span class="c-fav">${Art.icon('heart', 14)}</span>` : ''}
         ${o.isNew ? '<span class="c-new">NOVO!</span>' : ''}
@@ -236,6 +236,7 @@
         <button class="menu-tile t-mission" data-go="missions">${Art.icon('scroll')}Missões<small>Diárias e conquistas</small>${claim ? `<span class="notif-dot">${claim}</span>` : ''}</button>
         <button class="menu-tile t-settings" data-go="settings">${Art.icon('gear')}Configurações<small>Som · Animações · Save</small></button>
       </div>
+      <button class="v-glass ${st.owned.v ? 'found' : ''}" id="vGlass" aria-label="Um copo de requeijão" title="">${UI.glassSVG()}</button>
       <div class="home-stats">
         <span>Coleção <b>${Math.round(Core.completion() * 100)}%</b></span>
         <span>Fases <b>${st.campaign.cleared}/${SP.STAGE_COUNT}</b></span>
@@ -253,7 +254,61 @@
         else UI.openStage(next);
       } else UI.go(g);
     }));
+    UI.$('#vGlass', el).addEventListener('click', e => UI.touchGlass(e.currentTarget));
     if (!st.seenIntro) UI.showIntro();
+  };
+
+  /* ---------------------------------------------------------------- o copo (segredo) */
+  UI.glassSVG = () => `<svg viewBox="0 0 24 30" width="22" height="28" aria-hidden="true"><path d="M3 3 L21 3 L19 27 L5 27Z" fill="rgba(220,245,255,.25)" stroke="#dff6ff" stroke-width="1.4"/><path d="M5.2 15 L18.8 15 L18.2 26 L5.8 26Z" fill="rgba(159,220,255,.5)"/><rect x="7" y="7" width="8" height="4" fill="rgba(246,216,107,.6)"/></svg>`;
+  UI.touchGlass = function (btn) {
+    const st = SP.state;
+    if (btn.classList.contains('busy')) return;
+    if (st.owned.v) { UI.showDetail('v'); return; }
+    btn.classList.add('busy');
+    if (!Core.vReady()) {
+      // o copo cai, quebra... e é desfeito
+      btn.classList.add('falling');
+      setTimeout(() => {
+        UI.sfx('flip'); UI.sfx('hit');
+        SP.FX.at(btn, { colors: ['#dff6ff', '#9fdcff', '#ffffff'], count: 22, speed: 160, gravity: 400, shape: 'diamond', size: 4 });
+        btn.classList.add('broken');
+      }, 520);
+      setTimeout(() => {
+        btn.classList.remove('falling', 'broken');
+        UI.sfx('skill', 'time');
+        UI.toast('<i>“Eu queria que isso não tivesse acontecido.”</i><br><span class="small-txt">O copo está de volta na pia. Ainda não é a sua terça-feira… talvez depois que o último poder for devorado.</span>');
+        btn.classList.remove('busy');
+      }, 1500);
+      return;
+    }
+    // o copo para a quinze centímetros do chão
+    btn.classList.add('falling', 'stopped');
+    document.body.classList.add('time-stop');
+    UI.sfx('skill', 'time');
+    setTimeout(() => {
+      const r = Core.unlockV();
+      document.body.classList.remove('time-stop');
+      btn.classList.remove('falling', 'stopped', 'busy');
+      if (!r.ok) return;
+      btn.classList.add('found');
+      UI.changed();
+      UI.revealV();
+    }, 1800);
+  };
+  UI.revealV = function () {
+    const s = SP.STICKER.v;
+    SP.FX.flash('#ffe08a', 900);
+    UI.sfx('reveal', 6);
+    const m = UI.modal(`<div class="v-reveal">
+      <div class="v-kicker">STICKER SECRETO DESCOBERTO</div>
+      <div class="row center">${UI.card('v', { cls: 'lg', isNew: true, showCount: false })}</div>
+      <blockquote class="v-quote">“${UI.esc(s.quote)}”<span>— V</span></blockquote>
+      <p class="small-txt muted">Ele não está no álbum, não sai em pacotes e não pode ser forjado. Só quem fez o copo parar o encontra.</p>
+      <div class="row center"><button class="btn gold" id="vSee">Ver o V</button></div></div>`, { cls: 'narrow' });
+    const c = UI.$('.card', m);
+    UI.tilt(c);
+    setTimeout(() => { SP.FX.rarityBurst(c, 'secret'); SP.FX.at(c, { style: 'time', count: 60, speed: 300 }); }, 250);
+    UI.$('#vSee', m).addEventListener('click', () => { m.close(); UI.showDetail('v'); });
   };
 
   UI.showIntro = function () {
@@ -304,7 +359,8 @@
     </div>`;
     const grid = UI.$('#grid', el);
     const draw = () => {
-      let list = SP.STICKERS.slice();
+      // o sticker secreto só entra na lista depois de encontrado
+      let list = SP.STICKERS.concat(SP.SECRET_STICKERS.filter(x => st.owned[x.id]));
       const q = CF.q.trim().toLowerCase();
       if (q) list = list.filter(s => st.owned[s.id] && s.name.toLowerCase().indexOf(q) >= 0);
       if (CF.rarity !== 'all') list = list.filter(s => s.rarity === CF.rarity);
@@ -429,6 +485,7 @@
         ${UI.statBars(stats)}
         ${UI.skillHTML(id, own.stars)}
         ${UI.matchup(s.el)}
+        ${s.quote ? `<blockquote class="v-quote">“${UI.esc(s.quote)}”<span>— V</span></blockquote>` : ''}
         <p class="story" style="margin-top:12px">${UI.esc(s.story)}</p>
         <div class="row" style="margin-top:12px">
           <button class="btn small ${own.fav ? 'red' : 'ghost'}" data-a="fav">${Art.icon('heart', 16)} ${own.fav ? 'Favorito' : 'Favoritar'}</button>

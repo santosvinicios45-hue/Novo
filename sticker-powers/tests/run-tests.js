@@ -584,6 +584,50 @@ test('save antigo (sem torre, 3 estrelas) carrega normalmente', () => {
   eq(t2.tower.floor, 16, 'andar além do recorde+1 é corrigido');
 });
 
+/* ------------------------------------------------------------------ sticker secreto do V */
+console.log('\nSticker secreto: V');
+test('V existe, é Secreto, tem arte e fica fora do álbum, dos pacotes e da forja', () => {
+  const v = SP.STICKER.v;
+  assert(v && v.rarity === 'secret' && v.hidden);
+  assert(SP.Art.has('v'));
+  assert(SP.STICKERS.indexOf(v) < 0, 'V não pode estar no álbum');
+  SP.PACKS.forEach(p => assert(!Core.packOdds(p.id).stickers.some(x => x.id === 'v'), 'V nas chances de ' + p.id));
+  fresh(); SP.state.fragments = 1e6;
+  assert(!Core.craft('v').ok || !SP.STICKERS.some(x => x.id === 'v'));
+  for (let f = 1; f <= 60; f++) { const t = Core.towerSpec(f); if (t.enemies) t.enemies.forEach(x => assert(x.id !== 'v')); }
+});
+test('o copo só para depois de derrotar Ômega (fase 40), e só uma vez', () => {
+  fresh();
+  eq(Core.unlockV().reason, 'notYet');
+  assert(!SP.state.owned.v);
+  SP.state.campaign.cleared = 40;
+  const r = Core.unlockV();
+  assert(r.ok && r.isNew && SP.state.owned.v);
+  eq(SP.state.history[0].pack, 'O Copo');
+  eq(Core.unlockV().reason, 'already');
+});
+test('V não conta no álbum de 60 (é um extra) e sobrevive ao salvar/carregar', () => {
+  fresh();
+  const n = Core.uniqueOwned();
+  SP.state.campaign.cleared = 40; Core.unlockV();
+  eq(Core.uniqueOwned(), n);
+  Core.save(); SP.state = null; Core.load();
+  assert(SP.state.owned.v, 'V sumiu ao carregar');
+});
+test('habilidade do V: congela inimigos, revive todos os aliados caídos, cura e limpa', () => {
+  fresh();
+  const b = Battle.create({ players: [{ id: 'v', level: 30 }, { id: 'brasinha', level: 30 }, { id: 'gotinha', level: 30 }], enemies: [{ id: 'seixo', level: 30 }, { id: 'faisca', level: 30 }], rng: seeded(1) });
+  const [v, a, c] = b.units;
+  a.alive = false; a.hp = 0; c.alive = false; c.hp = 0;
+  v.statuses.push({ s: 'burn', t: 3 });
+  v.en = v.maxEn;
+  const ev = Battle.act(b, v, { type: 'skill' });
+  assert(a.alive && c.alive, 'não reviveu os dois');
+  eq(ev.filter(e => e.t === 'revive').length, 2);
+  assert(!Battle.has(v, 'burn'), 'não limpou');
+  assert(ev.some(e => e.t === 'status' && e.s === 'freeze') || ev.some(e => e.t === 'resist'), 'ninguém congelou (60% cada)');
+});
+
 /* ------------------------------------------------------------------ economia */
 console.log('\nEconomia');
 test('é possível progredir só jogando: 20 vitórias rápidas pagam vários pacotes', () => {

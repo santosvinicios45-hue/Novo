@@ -43,6 +43,10 @@ Depois acesse `http://localhost:8080`.
 | **Áudio** | Música procedural (menu, batalha, chefe) e efeitos para cliques, pacotes, raridades, golpes, cada elemento, cura, vitória, derrota, nível e evolução. Música, efeitos e volume são ajustáveis |
 | **Salvamento** | Automático no `localStorage`, com cópia de segurança, validação de dados corrompidos, exportar/importar e reinício com confirmação |
 
+### Um segredo
+
+Existe um sticker que não está no álbum, não sai em pacotes, não pode ser forjado e não aparece nem como silhueta. Ele vem de outra história. Quem o encontrar vai saber.
+
 ### Sobre raridade
 
 A raridade de cada sticker é fixa. Não existe mecânica para “subir” a raridade: o crescimento vem de níveis e estrelas.
@@ -61,7 +65,7 @@ Só existem moedas fictícias, sem compras reais nem anúncios. Uma vitória rá
 
 ```bash
 cd sticker-powers
-node tests/run-tests.js      # 60 testes de lógica (sem navegador)
+node tests/run-tests.js      # 64 testes de lógica (sem navegador)
 ```
 Cobrem dados, as 40 fases, a Torre Infinita, a evolução até 5 estrelas, probabilidades (incluindo 200 mil sorteios comparados com as chances exibidas), garantia do Premium, pacote diário, duplicatas, evolução, forja, cada efeito de combate, vantagens elementais, chefes, IA, mil batalhas simuladas, recompensas, missões diárias, salvamento, save corrompido e exportar/importar.
 

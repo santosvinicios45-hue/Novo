@@ -253,6 +253,73 @@
     <path d="M70 100 Q100 70 130 100 Q100 130 70 100Z" fill="none" stroke="#ff9cf0" stroke-width="2"/>
     ${star(30, 40, 6, '#fff')}${star(170, 40, 5, '#ff9cf0')}${star(160, 170, 6, '#4ff0ff')}${star(36, 160, 4, '#fff')}`;
 
+
+  /* ---------------------------------------------------------------- SECRETO: V
+     Inspirado na arte de referência do autor (assets/v_referencia.jpg):
+     cabelo grisalho bagunçado, barba por fazer, olhar cansado, jaqueta oliva.
+     Na mão, o copo de requeijão que parou a quinze centímetros do chão. */
+  D.v = G => {
+    let stub = '';
+    for (let i = 0; i < 70; i++) {
+      const a = Math.PI * (0.12 + 0.76 * ((i * 37) % 70) / 70), r = 22 + (i * 13) % 9;
+      const x = 92 + Math.cos(a) * r * 0.95, y = 84 + Math.sin(a) * r * 1.05;
+      if (y > 88) stub += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r=".7" fill="#3b3430" opacity=".25"/>`;
+    }
+    let ticks = '';
+    for (let i = 0; i < 12; i++) { const a = Math.PI * 2 * i / 12; ticks += `<line x1="${152 + Math.cos(a) * 30}" y1="${62 + Math.sin(a) * 30}" x2="${152 + Math.cos(a) * 35}" y2="${62 + Math.sin(a) * 35}" stroke="#ffe08a" stroke-width="${i % 3 ? 1.2 : 2.4}" opacity=".8"/>`; }
+    return `
+    <radialGradient id="${G('bg')}" cx="62%" cy="32%" r="80%"><stop offset="0" stop-color="#3a3a22"/><stop offset=".45" stop-color="#151a14"/><stop offset="1" stop-color="#050605"/></radialGradient>
+    <linearGradient id="${G('sk')}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9a27a"/><stop offset="1" stop-color="#9c6a4a"/></linearGradient>
+    <linearGradient id="${G('hr')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a3a3a0"/><stop offset=".6" stop-color="#6e6e6a"/><stop offset="1" stop-color="#3c3c3a"/></linearGradient>
+    <linearGradient id="${G('jk')}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6e644c"/><stop offset="1" stop-color="#3a3428"/></linearGradient>
+    <linearGradient id="${G('gl')}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e8fbff" stop-opacity=".55"/><stop offset=".5" stop-color="#ffffff" stop-opacity=".15"/><stop offset="1" stop-color="#cfefff" stop-opacity=".6"/></linearGradient>
+    <rect width="200" height="200" fill="url(#${G('bg')})"/>
+    <ellipse cx="34" cy="168" rx="9" ry="5" fill="#ffe8a8" opacity=".35" filter="url(#BL)"/><ellipse cx="62" cy="168" rx="9" ry="5" fill="#ffe8a8" opacity=".35" filter="url(#BL)"/>
+    <circle cx="34" cy="168" r="3" fill="#fff4cf" opacity=".6"/><circle cx="62" cy="168" r="3" fill="#fff4cf" opacity=".6"/>
+    <path d="M150 0 L138 40 L150 52 L136 96 M138 40 L118 30 M150 52 L176 64 L200 58" stroke="#ffc84a" stroke-width="1.6" fill="none" opacity=".55"/>
+    <path d="M150 0 L138 40 L150 52 L136 96" stroke="#ffe8a8" stroke-width="5" fill="none" opacity=".12" filter="url(#BL)"/>
+    <circle cx="152" cy="62" r="40" fill="#ffd36a" opacity=".18" filter="url(#BL)"/>
+    <circle cx="152" cy="62" r="32" fill="none" stroke="#ffe08a" stroke-width="1.2" stroke-dasharray="2 5" opacity=".75"/>${ticks}
+    <path d="M152 62 L152 40 M152 62 L166 70" stroke="#ffe08a" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+    <path d="M20 200 C22 160 40 140 66 134 L118 134 C144 140 160 160 164 200Z" fill="url(#${G('jk')})" stroke="#1e1a12" stroke-width="2"/>
+    <path d="M70 134 L92 176 L114 134" fill="#3c4434"/>
+    <path d="M70 134 L56 150 L74 168 L88 160 Z M114 134 L128 150 L110 168 L96 160 Z" fill="#7a7056" stroke="#1e1a12" stroke-width="1.5"/>
+    <path d="M40 176 L48 198 M146 178 L140 198" stroke="#2a251a" stroke-width="2" opacity=".6"/>
+    <path d="M80 112 L80 136 Q92 146 104 136 L104 112Z" fill="#a8744f"/>
+    <path d="M62 70 C60 44 76 32 94 32 C114 32 126 46 124 72 C124 96 112 114 94 116 C76 114 64 98 62 70Z" fill="url(#${G('sk')})"/>
+    <path d="M64 82 C68 104 80 114 94 116 C108 114 120 104 123 84 C116 96 108 102 94 103 C80 102 70 96 64 82Z" fill="#7a5a48" opacity=".35"/>
+    <path d="M66 86 C70 106 82 115 94 116 C106 115 118 106 122 86 C118 94 112 98 106 98 Q94 95 82 98 C76 97 70 93 66 86Z" fill="#4a4440" opacity=".22"/>
+    <path d="M84 100 Q94 96 104 100 L104 104 Q94 101 84 104Z" fill="#4a4440" opacity=".22"/>${stub}
+    <ellipse cx="62" cy="76" rx="5" ry="9" fill="#b98060"/><ellipse cx="125" cy="76" rx="5" ry="9" fill="#b98060"/>
+    <path d="M58 76 C50 64 49 50 57 41 C53 30 63 21 74 24 C78 13 92 11 99 18 C107 9 123 13 125 24 C135 26 140 39 133 48 C139 57 135 67 128 71 C126 60 122 53 116 51 C115 58 108 60 104 55 C100 62 92 63 88 57 C84 63 76 65 72 60 C70 66 65 71 62 77Z" fill="url(#${G('hr')})" stroke="#2c2c2a" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M64 46 C70 34 84 28 98 30 M80 22 C90 18 104 18 114 24 M104 32 C114 34 122 40 126 50" stroke="#c8c8c4" stroke-width="1.6" fill="none" opacity=".7" stroke-linecap="round"/>
+    <path d="M90 36 C92 44 90 50 86 55 M102 38 C106 44 106 50 104 54 M74 40 C74 48 72 54 68 60 M118 40 C122 46 124 54 124 62" stroke="#4a4a48" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path d="M96 24 C98 18 104 14 110 14 M60 40 C56 36 52 36 50 38" stroke="#8a8a86" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M70 66 C75 62 82 61 88 64" stroke="#3a3430" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+    <path d="M100 64 C106 61 113 62 118 66" stroke="#3a3430" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+    <path d="M71 74 Q79 69 87 74 Q79 77 71 74Z" fill="#f2ead8"/><path d="M101 74 Q109 69 117 74 Q109 77 101 74Z" fill="#f2ead8"/>
+    <circle cx="79" cy="73.6" r="2.7" fill="#3c4a3a"/><circle cx="109" cy="73.6" r="2.7" fill="#3c4a3a"/>
+    <circle cx="79" cy="73.6" r="1.2" fill="#0e0e0c"/><circle cx="109" cy="73.6" r="1.2" fill="#0e0e0c"/>
+    <circle cx="79.8" cy="72.8" r=".6" fill="#fff"/><circle cx="109.8" cy="72.8" r=".6" fill="#fff"/>
+    <path d="M70 73 Q79 67 88 73 M100 73 Q109 67 118 73" stroke="#4a2e22" stroke-width="1.8" fill="none"/>
+    <path d="M72 79 Q79 82 86 79 M102 79 Q109 82 116 79" stroke="#8a5a40" stroke-width="1.2" fill="none" opacity=".8"/>
+    <path d="M95 74 L92 92 Q95 95 99 93" stroke="#7a4e36" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M85 102 Q94 100 104 103" stroke="#5a3428" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <path d="M86 106 Q94 108 102 106" stroke="#8a5a40" stroke-width="1" fill="none" opacity=".6"/>
+    <path d="M140 200 C140 176 142 154 146 138 L160 134 C164 152 164 176 162 200Z" fill="url(#${G('jk')})" stroke="#1e1a12" stroke-width="2"/>
+    <path d="M142 112 C140 104 144 98 150 98 L164 98 C170 98 172 104 170 112 L166 136 L146 138Z" fill="url(#${G('sk')})"/>
+    <path d="M144 100 L140 86 Q142 82 146 86 L150 98 M151 98 L150 80 Q153 76 156 80 L157 98 M158 98 L160 82 Q163 79 165 83 L163 99 M165 102 L170 92 Q173 90 174 94 L170 108" fill="url(#${G('sk')})" stroke="#7a4e36" stroke-width="1.2"/>
+    <ellipse cx="156" cy="100" rx="22" ry="5" fill="#ffd36a" opacity=".4" filter="url(#BL)"/>
+    <path d="M141 48 L163 48 L160 76 L144 76Z" fill="url(#${G('gl')})" stroke="#e8fbff" stroke-width="1.4"/>
+    <path d="M143.5 62 L160.5 62 L159 75 L145 75Z" fill="#9fdcff" opacity=".45"/>
+    <path d="M141 48 L163 48" stroke="#ffffff" stroke-width="2"/>
+    <rect x="146" y="54" width="9" height="5" fill="#f6d86b" opacity=".55" transform="rotate(-4 150 56)"/>
+    <path d="M145 52 L146 72" stroke="#fff" stroke-width="1.2" opacity=".7"/>
+    <path d="M161 49 C163 51 163 53 161.5 55 C160 53 160 51 161 49Z" fill="#bff0ff"/>
+    <circle cx="164" cy="60" r="1.6" fill="#bff0ff"/><circle cx="139" cy="66" r="1.2" fill="#bff0ff"/>
+    <text x="186" y="192" text-anchor="end" font-family="sans-serif" font-size="7" font-weight="700" fill="#ffe08a" opacity=".8">TERÇA · 7:19</text>`;
+  };
+
   /* ---------------------------------------------------------------- chefes */
   B.hidra = G => {
     let necks = '';

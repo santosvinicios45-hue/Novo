@@ -368,6 +368,14 @@
           }
           break;
         }
+        case 'reviveAll': {
+          b.units.filter(u => u.side === actor.side && !u.alive && !u.isBoss).forEach(u => {
+            u.alive = true; u.hp = Math.round(u.maxHp * f.pct); u.statuses = []; u.en = 1;
+            b.queue.push(u.uid);
+            ev.push({ t: 'revive', u: u.uid, hp: u.hp });
+          });
+          break;
+        }
         case 'reviveOrHeal': {
           const dead = b.units.filter(u => u.side === actor.side && !u.alive && !u.isBoss);
           if (dead.length) {
@@ -587,7 +595,10 @@
       const healing = kinds.indexOf('heal') >= 0 || kinds.indexOf('reviveOrHeal') >= 0;
       const dealsDamage = kinds.some(k => k === 'dmg' || k === 'pctHp' || k === 'chain');
       const lowest = allies.slice().sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0];
-      if (kinds.indexOf('reviveOrHeal') >= 0) {
+      if (kinds.indexOf('reviveAll') >= 0) {
+        const dead = b.units.some(x => x.side === u.side && !x.alive);
+        if (dead || lowest.hp / lowest.maxHp < 0.6 || b.rng() < 0.5) return { type: 'skill', target: null };
+      } else if (kinds.indexOf('reviveOrHeal') >= 0) {
         const dead = b.units.some(x => x.side === u.side && !x.alive);
         if (dead || lowest.hp / lowest.maxHp < 0.6) return { type: 'skill', target: null };
       } else if (healing && !dealsDamage) {

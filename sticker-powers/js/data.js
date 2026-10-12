@@ -411,6 +411,20 @@
   SP.STICKER = {};
   S.forEach(s => { SP.STICKER[s.id] = s; });
 
+  /* ---------------------------------------------------------------- STICKER SECRETO
+     Fica fora do álbum, dos pacotes, da forja e das probabilidades. Não aparece
+     nem como silhueta: só existe para quem o encontra (ver Core.vReady). */
+  SP.SECRET_STICKERS = [
+    { id: 'v', name: 'V', el: 'time', rarity: 'secret', role: 'balanced', en: 6, hidden: true, num: 0,
+      title: 'O Homem Que Acordou Grande Demais',
+      story: 'Numa terça-feira qualquer, às sete e dezenove da manhã, um copo de requeijão escorregou da pia e parou a quinze centímetros do chão. Desde então a realidade obedece a ele. Já desfez o que não devia, trouxe de volta quem não devia voltar e carrega sozinho segredos que ninguém mais lembra. Nunca mais pôde dizer “não tinha nada que eu pudesse fazer”.',
+      quote: 'Eu prefiro carregar a culpa de ter feito, do que a culpa de não ter feito nada.',
+      skill: { name: 'Eu Queria Que Isso Não Tivesse Acontecido', cost: 5, target: 'allEnemies',
+        desc: 'O tempo para como o copo: congela todos os inimigos (60% de chance cada), traz de volta todos os aliados caídos com 40% de vida, cura a equipe em 20% e desfaz todos os efeitos negativos.',
+        fx: [{ k: 'status', s: 'freeze', t: 1, chance: 0.6 }, { k: 'reviveAll', pct: 0.4 }, { k: 'heal', pct: 0.2, to: 'allies' }, { k: 'cleanse', to: 'allies' }] } }
+  ];
+  SP.SECRET_STICKERS.forEach(s => { SP.STICKER[s.id] = s; });
+
   /* ---------------------------------------------------------------- CHEFES */
   SP.BOSS_BASE_MULT = 1.0; // atributos base do chefe = sticker comum do mesmo nível × multiplicadores abaixo
   SP.BOSSES = [

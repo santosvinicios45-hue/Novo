@@ -98,6 +98,7 @@ const assert = (c, m) => { if (!c) throw new Error(m || 'falhou'); };
     await p.click('[data-go=collection]');
     const total = (await p.$$('#grid .card')).length;
     assert(total === 60, 'esperava 60 cartas, veio ' + total);
+    assert(!(await p.$('#grid .card[data-id=v]')), 'o V secreto não pode aparecer antes de ser encontrado');
     await p.selectOption('#fStatus', 'owned');
     const owned = (await p.$$('#grid .card')).length;
     assert(owned === Object.keys((await state()).owned).length, 'filtro obtidos');
@@ -215,6 +216,24 @@ const assert = (c, m) => { if (!c) throw new Error(m || 'falhou'); };
     assert((await p.textContent('.modal h3')).indexOf('Fase 21') >= 0, 'fase 21 não abriu');
     await closeModals();
     await shot('act2');
+  });
+
+  await step('segredo: o copo quebra e volta; depois da fase 40 ele para e revela o V', async () => {
+    await home();
+    await p.evaluate(() => { SP.state.campaign.cleared = 39; SP.UI.go('home'); });
+    await p.click('#vGlass', { force: true });
+    await p.waitForTimeout(1700);
+    assert(!(await state()).owned.v, 'V liberado cedo demais');
+    await p.evaluate(() => { SP.state.campaign.cleared = 40; SP.UI.go('home'); });
+    await p.click('#vGlass', { force: true });
+    await p.waitForSelector('.v-reveal', { timeout: 5000 });
+    await p.waitForTimeout(500);
+    await shot('v-reveal');
+    assert((await state()).owned.v, 'V não foi salvo');
+    await closeModals();
+    await p.click('[data-go=collection]');
+    assert(await p.$('#grid .card[data-id=v]'), 'V não apareceu na coleção depois de encontrado');
+    await p.evaluate(() => { SP.state.campaign.cleared = 20; SP.UI.changed(); });
   });
 
   console.log('\nMelhorias');
