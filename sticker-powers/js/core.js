@@ -73,6 +73,7 @@
       campaign: { cleared: 0 },
       tower: { floor: 1, best: 0 },
       nightmare: { cleared: 0 },
+      raid: { week: -1, best: 0, total: 0 },
       frames: { owned: ['classica'], equip: {} },
       bosses: {},          // bossId -> maior nível de desafio vencido (0 = nunca)
       missions: {},        // missionId -> true quando a recompensa foi resgatada
@@ -97,6 +98,11 @@
     st.fragments = clampInt(raw.fragments, 0, 1e9, 0);
     st.essence = clampInt(raw.essence, 0, 1e6, 0);
     st.crystals = clampInt(raw.crystals, 0, 1e6, 0);
+    if (isObj(raw.raid)) {
+      st.raid.week = clampInt(raw.raid.week, -1, 1e6, -1);
+      st.raid.best = clampInt(raw.raid.best, 0, 1e12, 0);
+      st.raid.total = clampInt(raw.raid.total, 0, 1e15, 0);
+    }
     if (isObj(raw.nightmare)) st.nightmare.cleared = clampInt(raw.nightmare.cleared, 0, SP.ACT2_END, 0);
     if (isObj(raw.frames)) {
       if (Array.isArray(raw.frames.owned)) raw.frames.owned.forEach(f => { if (SP.FRAME[f] && st.frames.owned.indexOf(f) < 0) st.frames.owned.push(f); });
@@ -147,7 +153,7 @@
     if (isObj(raw.daily)) {
       st.daily.date = typeof raw.daily.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.daily.date) ? raw.daily.date : '';
       st.daily.freeClaimedAt = clampInt(raw.daily.freeClaimedAt, 0, 8.64e15, 0);
-      if (isObj(raw.daily.counters)) ['packs', 'wins', 'skills', 'upgrades'].forEach(k => { st.daily.counters[k] = clampInt(raw.daily.counters[k], 0, 1e6, 0); });
+      if (isObj(raw.daily.counters)) ['packs', 'wins', 'skills', 'upgrades', 'raid'].forEach(k => { st.daily.counters[k] = clampInt(raw.daily.counters[k], 0, 1e6, 0); });
       if (isObj(raw.daily.claimed)) SP.DAILY_MISSIONS.forEach(m => { if (raw.daily.claimed[m.id] === true) st.daily.claimed[m.id] = true; });
     }
     if (Array.isArray(raw.team)) {
@@ -239,10 +245,11 @@
   Core.baseStats = function (id) {
     const s = SP.STICKER[id];
     const r = SP.RARITY[s.rarity], role = SP.ROLES[s.role], B = SP.BASE_STATS;
+    const fb = 1; // fusões são um pouco mais fortes que um Secreto comum
     return {
-      hp: B.hp * r.mult * role.hp,
-      atk: B.atk * r.mult * role.atk,
-      def: B.def * r.mult * role.def,
+      hp: B.hp * r.mult * role.hp * fb,
+      atk: B.atk * r.mult * role.atk * fb,
+      def: B.def * r.mult * role.def * fb,
       spd: B.spd * (1 + (r.mult - 1) * 0.5) * role.spd
     };
   };
@@ -274,10 +281,10 @@
     const sk = SP.STICKER[id].skill;
     const st = stars || 1;
     if (st < 3) return sk;
-    const supreme = st >= 5, transcend = st >= 6;
-    const k = transcend ? SP.PROG.transcendPower : supreme ? SP.PROG.supremePower : SP.PROG.awakenedPower;
+    const supreme = st >= 5, transcend = st >= 6, divine = st >= 7;
+    const k = divine ? SP.PROG.divinePower : transcend ? SP.PROG.transcendPower : supreme ? SP.PROG.supremePower : SP.PROG.awakenedPower;
     return Object.assign({}, sk, {
-      name: sk.name + (transcend ? ' ✦✦✦' : supreme ? ' ✦✦' : ' ✦'), awakened: true, supreme, transcend, cost: Math.max(1, sk.cost - 1),
+      name: sk.name + (divine ? ' ✦✦✦✦' : transcend ? ' ✦✦✦' : supreme ? ' ✦✦' : ' ✦'), awakened: true, supreme, transcend, divine, cost: Math.max(1, sk.cost - 1),
       fx: sk.fx.map(f => {
         const g = Object.assign({}, f);
         if (g.p) g.p = Math.round(g.p * k * 100) / 100;
@@ -534,7 +541,8 @@
             : o.stars === 2 ? 'Habilidade Desperta: +25% de poder e custo −1 + aura animada na carta.'
             : o.stars === 3 ? 'Limite de nível 40 + moldura de cristal na carta.'
             : o.stars === 4 ? 'Forma Suprema: habilidade com +50% de poder (em vez de +25%) + coroa de luz na carta.'
-            : o.stars === 5 ? 'Transcendente: limite de nível 60, habilidade com +75% de poder + aura arco-íris na carta.' : ''
+            : o.stars === 5 ? 'Transcendente: limite de nível 60, habilidade com +75% de poder + aura arco-íris na carta.'
+            : o.stars === 6 ? 'Divino: limite de nível 70, habilidade com +100% de poder + asas de luz na carta.' : ''
     };
     info.levelOk = o.level >= info.needLevel;
     info.coinsOk = SP.state.coins >= info.coins;
@@ -589,6 +597,8 @@
       case 'cleared': return st.campaign.cleared;
       case 'towerBest': return st.tower.best;
       case 'nightCleared': return st.nightmare.cleared;
+      case 'fusions': return SP.FUSIONS.filter(f => st.owned[f.id]).length;
+      case 'raidTotal': return st.raid.total;
       case 'framesOwned': return st.frames.owned.length;
       case 'uniqueOwned': return Core.uniqueOwned();
       case 'bossKinds': return SP.BOSSES.filter(b => st.bosses[b.id] > 0).length;
@@ -617,7 +627,7 @@
     const d = SP.state.daily;
     if (d.date !== key) {
       d.date = key;
-      d.counters = { packs: 0, wins: 0, skills: 0, upgrades: 0 };
+      d.counters = { packs: 0, wins: 0, skills: 0, upgrades: 0, raid: 0 };
       d.claimed = {};
       return true;
     }
@@ -700,6 +710,84 @@
     if (SP.state.owned.van) return { ok: false, reason: 'already' };
     if (!SP.state.owned.v) return { ok: false, reason: 'notYet' };
     return Object.assign({ ok: true }, Core.addSticker('van', 'Os Faróis'));
+  };
+
+  /* ---------------------------------------------------------------- Gustavo e Téo (mais segredos) */
+  // Quinta-feira é dia do Gustavo (pelo relógio do dispositivo).
+  Core.isThursday = now => new Date(now || Date.now()).getDay() === 4;
+  Core.unlockGustavo = function (now) {
+    if (SP.state.owned.gustavo) return { ok: false, reason: 'already' };
+    if (!SP.state.owned.v || !Core.isThursday(now)) return { ok: false, reason: 'notYet' };
+    return Object.assign({ ok: true }, Core.addSticker('gustavo', 'Quinta-feira'));
+  };
+  // O Téo volta quando o V traz alguém de volta numa batalha.
+  Core.unlockTeo = function () {
+    if (SP.state.owned.teo) return { ok: false, reason: 'already' };
+    if (!SP.state.owned.v) return { ok: false, reason: 'notYet' };
+    return Object.assign({ ok: true }, Core.addSticker('teo', 'Ele volta'));
+  };
+
+  /* ---------------------------------------------------------------- fusões */
+  Core.fusionKnown = f => !f.secretRecipe || (SP.state.owned[f.a] && SP.state.owned[f.b]) || !!SP.state.owned[f.id];
+  Core.fusionInfo = function (fid) {
+    const f = SP.STICKER[fid];
+    const st = SP.state, C = SP.FUSION_COST;
+    const pa = st.owned[f.a], pb = st.owned[f.b];
+    const info = {
+      f, owned: !!st.owned[fid],
+      hasA: !!pa, hasB: !!pb,
+      starsA: pa ? pa.stars : 0, starsB: pb ? pb.stars : 0,
+      cost: C
+    };
+    info.starsOk = info.starsA >= SP.FUSION_MIN_STARS && info.starsB >= SP.FUSION_MIN_STARS;
+    info.coinsOk = st.coins >= C.coins; info.fragsOk = st.fragments >= C.fragments; info.essenceOk = st.essence >= C.essence;
+    info.ok = !info.owned && info.hasA && info.hasB && info.starsOk && info.coinsOk && info.fragsOk && info.essenceOk;
+    return info;
+  };
+  Core.fuse = function (fid) {
+    const f = SP.STICKER[fid];
+    if (!f || !f.fusion) return { ok: false, reason: 'Receita inexistente.' };
+    const i = Core.fusionInfo(fid);
+    if (i.owned) return { ok: false, reason: 'Você já fez esta fusão.' };
+    if (!i.hasA || !i.hasB) return { ok: false, reason: 'Você precisa ter os dois stickers.' };
+    if (!i.starsOk) return { ok: false, reason: 'Os dois stickers precisam ter ' + SP.FUSION_MIN_STARS + ' estrelas ou mais.' };
+    if (!i.coinsOk) return { ok: false, reason: 'Moedas insuficientes.' };
+    if (!i.fragsOk) return { ok: false, reason: 'Fragmentos insuficientes.' };
+    if (!i.essenceOk) return { ok: false, reason: 'Essência insuficiente.' };
+    const C = SP.FUSION_COST;
+    SP.state.coins -= C.coins; SP.state.fragments -= C.fragments; SP.state.essence -= C.essence;
+    return Object.assign({ ok: true }, Core.addSticker(fid, 'Fusão'));
+  };
+
+  /* ---------------------------------------------------------------- chefe mundial */
+  Core.raidSpec = function (now) {
+    const w = Core.weekIndex(now);
+    const n = SP.BOSSES.length, R = SP.RAID;
+    const boss = SP.BOSSES[((w % n) + n) % n];
+    const mod = R.mods[((w % R.mods.length) + R.mods.length) % R.mods.length];
+    return { week: w, boss: { id: boss.id, level: R.level, hpMult: R.hpMult, atkMult: R.atkMult }, mods: [mod], ends: Core.currentEvent(now).endsAt };
+  };
+  Core.raidAttemptsLeft = function (now) {
+    Core.ensureDaily(now);
+    return Math.max(0, SP.RAID.attempts - (SP.state.daily.counters.raid || 0));
+  };
+  Core.raidTier = dmg => SP.RAID.tiers.reduce((t, x, i) => (dmg >= x.dmg ? i : t), -1);
+  /** Registra uma tentativa no Chefe Mundial e entrega a recompensa da faixa alcançada. */
+  Core.applyRaid = function (damage, team, now) {
+    if (Core.raidAttemptsLeft(now) <= 0) return { ok: false, reason: 'Sem tentativas hoje. Volte amanhã.' };
+    const st = SP.state, spec = Core.raidSpec(now);
+    if (st.raid.week !== spec.week) { st.raid.week = spec.week; st.raid.best = 0; }
+    Core.dailyCount('raid', 1, now);
+    const dmg = Math.max(0, Math.round(damage));
+    const record = dmg > st.raid.best;
+    st.raid.best = Math.max(st.raid.best, dmg);
+    st.raid.total += dmg;
+    const tier = Core.raidTier(dmg);
+    const rw = tier >= 0 ? Object.assign({}, SP.RAID.tiers[tier].reward) : { coins: 300 };
+    Core.giveReward(rw);
+    const xp = 60 + Math.max(0, tier) * 40;
+    (team || []).forEach(id => Core.grantXp(id, xp));
+    return { ok: true, damage: dmg, tier, reward: rw, record, xp };
   };
 
   /* ---------------------------------------------------------------- modo pesadelo */

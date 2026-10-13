@@ -487,7 +487,70 @@
       title: 'O Peso de Mil Universos',
       story: 'A coroa do Imperador Estelar, que caiu quando a maldade dele foi apagada. Ainda guarda a lembrança de um soco que apagava universos.',
       skill: { name: 'Soco do Fim dos Mundos', cost: 5, target: 'enemy', desc: '300% de dano e o golpe se espalha com 80% nos outros inimigos.',
-        fx: [{ k: 'dmg', p: 3.0 }, { k: 'chain', p: 0.8 }] } }
+        fx: [{ k: 'dmg', p: 3.0 }, { k: 'chain', p: 0.8 }] } },
+    // ----------------------------------------------------------- ATO IV: NOVOS STICKERS DE PACOTE
+    { id: 'gato_astronauta', name: 'Gato Astronauta', el: 'cosmic', rarity: 'uncommon', role: 'speed', en: 4,
+      title: 'Tripulante Curioso',
+      story: 'Entrou numa caixa de papelão, a caixa entrou num foguete, e o foguete nunca mais voltou. Ele não parece se importar: o espaço tem muitas caixas.',
+      skill: { name: 'Pulo em Gravidade Zero', cost: 2, target: 'enemy', desc: '110% de dano e ganha Esquiva.',
+        fx: [{ k: 'dmg', p: 1.1 }, { k: 'status', s: 'dodge', t: 3, to: 'self' }] } },
+    { id: 'vespa_neon', name: 'Vespa de Neon', el: 'plasma', rarity: 'rare', role: 'speed', en: 5,
+      title: 'Zumbido Elétrico',
+      story: 'Nasceu num letreiro quebrado de uma cidade que nunca dorme. Pica rápido, brilha forte e some antes que alguém consiga desligá-la.',
+      skill: { name: 'Ferroada Fluorescente', cost: 3, target: 'enemy', desc: '3 picadas de 55% que ignoram 30% da defesa, com 30% de chance de atordoar.',
+        fx: [{ k: 'dmg', p: 0.55, hits: 3, pierce: 0.3 }, { k: 'status', s: 'stun', t: 1, chance: 0.3 }] } },
+    { id: 'tubarao_trovao', name: 'Tubarão-Trovão', el: 'lightning', rarity: 'rare', role: 'attacker', en: 5,
+      title: 'Predador da Tempestade',
+      story: 'Nada nas nuvens de chuva como se fossem mar. Quando sente cheiro de raio, vem mordendo — e cada mordida acende o céu.',
+      skill: { name: 'Mordida Elétrica', cost: 3, target: 'enemy', desc: '160% de dano (+50% contra Água) e drena 1 de energia.',
+        fx: [{ k: 'dmg', p: 1.6, bonusVs: 'water' }, { k: 'energy', n: -1 }] } },
+    { id: 'dragao_jade', name: 'Dragão de Jade', el: 'nature', rarity: 'epic', role: 'balanced', en: 6,
+      title: 'Guardião dos Templos Verdes',
+      story: 'Dorme enrolado em volta de templos esquecidos e acorda quando alguém precisa de proteção. Suas escamas são pedras preciosas que crescem como folhas.',
+      skill: { name: 'Sopro de Jade', cost: 4, target: 'allEnemies', desc: '90% de dano em todos e a equipe regenera 8% por 3 turnos.',
+        fx: [{ k: 'dmg', p: 0.9 }, { k: 'status', s: 'regen', t: 3, v: 0.08, to: 'allies' }] } },
+    { id: 'cavaleiro_obsidiana', name: 'Cavaleiro de Obsidiana', el: 'earth', rarity: 'epic', role: 'tank', en: 5,
+      title: 'Armadura de Vulcão',
+      story: 'Sua armadura é lava que esfriou rápido demais. Por dentro, ainda arde — e quem bate nele sente o calor voltar.',
+      skill: { name: 'Muralha Vulcânica', cost: 3, target: 'self', desc: 'Escudo de 35%, devolve 35% do dano e provoca por 2 turnos.',
+        fx: [{ k: 'shield', pct: 0.35 }, { k: 'status', s: 'reflect', t: 2, v: 0.35 }, { k: 'status', s: 'taunt', t: 2 }] } },
+    { id: 'fenix_glacial', name: 'Fênix Glacial', el: 'ice', rarity: 'legendary', role: 'support', en: 6,
+      title: 'A Ave do Inverno Sem Fim',
+      story: 'Irmã gêmea da Fênix Rubra, nasceu das cinzas de uma estrela que congelou. Onde ela voa, a neve cura em vez de ferir.',
+      skill: { name: 'Renascer no Gelo', cost: 4, target: 'allEnemies', desc: '90% de dano em todos, 40% de chance de congelar cada um e revive todos os aliados caídos com 25% de vida.',
+        fx: [{ k: 'dmg', p: 0.9 }, { k: 'status', s: 'freeze', t: 1, chance: 0.4 }, { k: 'reviveAll', pct: 0.25 }] } },
+    { id: 'relojoeiro_tita', name: 'Relojoeiro Titã', el: 'time', rarity: 'legendary', role: 'support', en: 6,
+      title: 'O Que Dá Corda no Mundo',
+      story: 'Todo dia, à meia-noite, ele dá corda no mundo. Se um dia esquecer, tudo para — então ele nunca esquece, e nunca dorme.',
+      skill: { name: 'Corda no Mundo', cost: 4, target: 'allAllies', desc: 'A equipe ganha 2 de energia e Ataque+ por 2 turnos; os inimigos vão para o fim da fila.',
+        fx: [{ k: 'energy', n: 2 }, { k: 'status', s: 'atkUp', t: 2 }, { k: 'delay', to: 'enemies' }] } },
+    { id: 'nebulosa_viva', name: 'Nebulosa Viva', el: 'cosmic', rarity: 'mythic', role: 'balanced', en: 6,
+      title: 'Berçário de Estrelas',
+      story: 'Uma nuvem de gás e poeira do tamanho de mil sistemas solares, que aprendeu a sonhar. Cada sonho dela vira uma estrela nova.',
+      skill: { name: 'Parto Estelar', cost: 4, target: 'allEnemies', desc: '130% de dano em todos e a equipe é curada em 40% do dano causado.',
+        fx: [{ k: 'dmg', p: 1.3, teamHeal: 0.4 }] } },
+
+    // ----------------------------------------------------------- ATO IV: EXCLUSIVOS DE CHEFES
+    { id: 'deus_apostador', name: 'Deus Apostador', el: 'light', rarity: 'mythic', role: 'speed', en: 6, bossOnly: 'plateia',
+      title: 'Aposta no Universo Errado',
+      story: 'Assistia universos colapsarem e apostava em qual cairia primeiro. Perdeu a última aposta — e agora joga do lado de quem venceu.',
+      skill: { name: 'Tudo ou Nada', cost: 4, target: 'enemy', desc: '250% de dano com +40% de chance de crítico.',
+        fx: [{ k: 'dmg', p: 2.5, crit: 0.4 }] } },
+    { id: 'coelho_divino', name: 'Coelho Divino', el: 'nature', rarity: 'secret', role: 'speed', en: 6, bossOnly: 'rei_coelho',
+      title: 'Pequeno, Literalmente',
+      story: 'Já foi um deus que tratava a existência como brinquedo. Hoje é um coelho. Ainda é poderoso. Ainda é muito, muito fofo. Não comente isso perto dele.',
+      skill: { name: 'Salto Entre Mundos', cost: 4, target: 'allEnemies', desc: '100% de dano em todos e age outra vez imediatamente.',
+        fx: [{ k: 'dmg', p: 1.0 }, { k: 'haste', to: 'self' }] } },
+    { id: 'possibilidade_perdida', name: 'Possibilidade Perdida', el: 'time', rarity: 'secret', role: 'balanced', en: 6, bossOnly: 'trigg',
+      title: 'O Que Poderia Ter Sido',
+      story: 'Trigg apagava a possibilidade das coisas terem existido. Esta foi a única que escapou — e agora quer existir com toda a força.',
+      skill: { name: 'Nunca Aconteceu', cost: 4, target: 'allEnemies', desc: 'Remove os efeitos positivos dos inimigos, drena 2 de energia de cada e os congela (50% de chance).',
+        fx: [{ k: 'dispel' }, { k: 'energy', n: -2 }, { k: 'status', s: 'freeze', t: 1, chance: 0.5 }] } },
+    { id: 'fragmento_topo', name: 'Fragmento do Topo', el: 'cosmic', rarity: 'secret', role: 'attacker', en: 6, bossOnly: 'nivel_de_cima',
+      title: 'Um Pedaço do Nível de Cima',
+      story: 'Existem níveis, e ninguém nunca está no de cima. Este é um pedaço de quem estava mais perto — e ele lembra de como era a vista.',
+      skill: { name: 'Demonstração de Escala', cost: 5, target: 'allEnemies', desc: '200% de dano em todos, ignorando 50% da defesa.',
+        fx: [{ k: 'dmg', p: 2.0, pierce: 0.5 }] } }
 
   ];
   S.forEach((s, i) => { s.num = i + 1; });
@@ -516,6 +579,85 @@
         fx: [{ k: 'heal', pct: 0.18 }, { k: 'energy', n: 1 }, { k: 'cleanse' }, { k: 'status', s: 'regen', t: 2, v: 0.06 }] } }
   ];
   SP.SECRET_STICKERS.forEach(s => { SP.STICKER[s.id] = s; });
+
+  // Mais dois segredos do livro: Gustavo (quinta-feira) e Téo (o V traz de volta).
+  SP.SECRET_STICKERS.push(
+    { id: 'gustavo', name: 'Gustavo', el: 'fire', rarity: 'secret', role: 'support', en: 6, hidden: true, num: 0,
+      title: 'O Amigo Que Aparece',
+      story: 'Não é um gênio, não é um conselheiro, não tem sabedoria nenhuma para oferecer — e admite isso com orgulho. Mas ele aparece. Toda quinta-feira, com comida ruim e a mesma história contada três vezes.',
+      quote: 'Se tiver alguma coisa, você fala. Fala mesmo.',
+      quoteBy: 'Gustavo',
+      skill: { name: 'Quinta é Dia do Gustavo', cost: 3, target: 'allAllies', desc: 'Chega com pizza: cura a equipe em 25%, dá Ataque+ por 2 turnos e remove efeitos negativos.',
+        fx: [{ k: 'heal', pct: 0.25 }, { k: 'status', s: 'atkUp', t: 2 }, { k: 'cleanse' }] } },
+    { id: 'teo', name: 'Téo', el: 'light', rarity: 'secret', role: 'balanced', en: 6, hidden: true, num: 0,
+      title: 'O Que Repara',
+      story: 'O mais quieto dos amigos: quando fala, é a melhor coisa da noite. Toca violão razoavelmente mal e canta razoavelmente bem. Voltou confuso, de terno, sem entender por quê — e lembra de um lugar onde não existem dias.',
+      quote: 'Ué.',
+      quoteBy: 'Téo',
+      skill: { name: 'Áudio de Cinco Segundos', cost: 3, target: 'allAllies', desc: 'Uma música inventada na hora: a equipe regenera 10% por 3 turnos, ganha 1 de energia e Esquiva.',
+        fx: [{ k: 'status', s: 'regen', t: 3, v: 0.1 }, { k: 'energy', n: 1 }, { k: 'status', s: 'dodge', t: 3 }] } }
+  );
+  SP.SECRET_STICKERS.slice(-2).forEach(s => { SP.STICKER[s.id] = s; });
+
+  /* ---------------------------------------------------------------- FUSÕES
+     Dois stickers com 3+ estrelas se fundem num sticker novo (os originais
+     continuam com você). A arte da fusão junta as duas artes. */
+  SP.FUSION_COST = { coins: 25000, fragments: 600, essence: 6 };
+  SP.FUSION_MIN_STARS = 3;
+  SP.FUSIONS = [
+    { id: 'fx_vaporex', a: 'inferno_rex', b: 'frost_queen', name: 'Vaporex', el: 'fire', role: 'attacker',
+      title: 'Fogo e Gelo em Equilíbrio',
+      story: 'Quando o guerreiro do vulcão apertou a mão da rainha do inverno, nenhum dos dois cedeu. O vapor que nasceu desse empate ganhou vontade própria.',
+      skill: { name: 'Choque Térmico', cost: 4, target: 'allEnemies', desc: '130% de dano em todos, queima todos e congela cada um com 40% de chance.',
+        fx: [{ k: 'dmg', p: 1.3 }, { k: 'status', s: 'burn', t: 3 }, { k: 'status', s: 'freeze', t: 1, chance: 0.4 }] } },
+    { id: 'fx_dragao_mare', a: 'volt_dragon', b: 'aqua_phantom', name: 'Dragão da Maré Elétrica', el: 'lightning', role: 'attacker',
+      title: 'A Tempestade Que Canta',
+      story: 'O dragão que vive nas nuvens engoliu a canção do marinheiro afogado. Agora cada relâmpago dele vem com uma melodia triste.',
+      skill: { name: 'Maremoto Elétrico', cost: 4, target: 'allEnemies', desc: '120% de dano em todos (+50% contra Água) e enfraquece todos.',
+        fx: [{ k: 'dmg', p: 1.2, bonusVs: 'water' }, { k: 'status', s: 'weaken', t: 2 }] } },
+    { id: 'fx_eclipse_vivo', a: 'solar_titan', b: 'shadow_ninja', name: 'Eclipse Vivo', el: 'light', role: 'balanced',
+      title: 'Meio-Dia à Meia-Noite',
+      story: 'O titã do sol e o ninja da lua nova lutaram até o amanhecer e descobriram que eram a mesma pessoa vista de lados diferentes.',
+      skill: { name: 'Luz Que Corta', cost: 4, target: 'enemy', desc: '4 golpes de 60%, cura a equipe em 60% do dano e prepara uma esquiva.',
+        fx: [{ k: 'dmg', p: 0.6, hits: 4, teamHeal: 0.6 }, { k: 'status', s: 'dodge', t: 3, to: 'self' }] } },
+    { id: 'fx_singularidade', a: 'chronos', b: 'gravitar', name: 'Singularidade Temporal', el: 'time', role: 'support',
+      title: 'Onde o Tempo Cai',
+      story: 'O mestre das horas caiu dentro da serpente que engole órbitas. Lá dentro, o tempo pesa — e ele aprendeu a jogar esse peso nos inimigos.',
+      skill: { name: 'Horizonte das Horas', cost: 4, target: 'allEnemies', desc: 'Remove 20% da vida atual de todos, empurra todos para o fim da fila e age de novo.',
+        fx: [{ k: 'pctHp', p: 0.2, minP: 0.7 }, { k: 'delay' }, { k: 'haste', to: 'self' }] } },
+    { id: 'fx_bastiao', a: 'terra_golem', b: 'guardiao_espinhoso', name: 'Bastião Ancestral', el: 'earth', role: 'tank',
+      title: 'A Montanha Que Floresce',
+      story: 'O golem da montanha deixou o ent da floresta velha criar raízes em suas costas. Juntos, viraram uma fortaleza viva que ninguém atravessa.',
+      skill: { name: 'Raízes de Pedra', cost: 4, target: 'allAllies', desc: 'Equipe ganha escudo de 30% e Defesa+; ele provoca e devolve 50% do dano por 2 turnos.',
+        fx: [{ k: 'shield', pct: 0.3 }, { k: 'status', s: 'defUp', t: 2 }, { k: 'status', s: 'taunt', t: 2, to: 'self' }, { k: 'status', s: 'reflect', t: 2, v: 0.5, to: 'self' }] } },
+    { id: 'fx_big_crunch', a: 'void_king', b: 'prismora', name: 'Big Crunch', el: 'cosmic', role: 'attacker',
+      title: 'O Fim e o Começo',
+      story: 'O rei do vazio segurou a criança estelar no colo e, pela primeira vez, sentiu falta do barulho. O universo inteiro encolheu um pouco para ouvir.',
+      skill: { name: 'Colapso e Renascimento', cost: 5, target: 'allEnemies', desc: '180% de dano em todos e toda a equipe ganha 2 de energia.',
+        fx: [{ k: 'dmg', p: 1.8 }, { k: 'energy', n: 2, to: 'allies' }] } },
+    { id: 'fx_fenix_aurora', a: 'fenix_rubra', b: 'serafim_aurora', name: 'Fênix da Aurora', el: 'fire', role: 'support',
+      title: 'O Primeiro Raio Que Não Morre',
+      story: 'A ave que renasce encontrou a mensageira do amanhecer. Agora, toda manhã, alguém que tinha caído levanta.',
+      skill: { name: 'Alvorada Eterna', cost: 4, target: 'allEnemies', desc: '90% de dano em todos, queima todos e revive todos os aliados caídos com 35% de vida.',
+        fx: [{ k: 'dmg', p: 0.9 }, { k: 'status', s: 'burn', t: 3 }, { k: 'reviveAll', pct: 0.35 }] } },
+    { id: 'fx_leviata_abissal', a: 'kraken_abissal', b: 'leviata_plasma', name: 'Leviatã Abissal', el: 'water', role: 'tank',
+      title: 'Do Fundo do Mar ao Fundo do Sol',
+      story: 'O que dorme no fundo do oceano e o que nada dentro das estrelas se encontraram no meio do caminho. O mar ferveu de alegria.',
+      skill: { name: 'Maré de Plasma', cost: 4, target: 'allEnemies', desc: '120% de dano em todos, 2 acúmulos de veneno e drena 1 de energia de cada.',
+        fx: [{ k: 'dmg', p: 1.2 }, { k: 'status', s: 'poison', t: 3, v: 2 }, { k: 'energy', n: -1 }] } },
+    { id: 'fx_estrada', a: 'v', b: 'van', name: 'Para Onde Ir', el: 'time', role: 'balanced', secretRecipe: true,
+      title: 'Com Quem Você Gosta',
+      story: 'Aos oito anos, ele achava que a coisa mais bonita do mundo era ter para onde ir com quem você gosta. Depois de tudo — o copo, o Téo, os deuses, a borda — ele ainda acha.',
+      quote: 'Eu prefiro carregar a culpa de ter feito, do que a culpa de não ter feito nada.',
+      skill: { name: 'Pé na Estrada', cost: 5, target: 'allEnemies', desc: 'Congela todos os inimigos, revive todos os aliados com 50%, cura a equipe em 30%, dá 2 de energia a todos e remove os efeitos negativos.',
+        fx: [{ k: 'status', s: 'freeze', t: 1 }, { k: 'reviveAll', pct: 0.5 }, { k: 'heal', pct: 0.3, to: 'allies' }, { k: 'energy', n: 2, to: 'allies' }, { k: 'cleanse', to: 'allies' }] } }
+  ];
+  SP.FUSIONS.forEach(f => {
+    f.rarity = 'secret'; f.en = 6; f.fusion = true; f.hidden = true; f.num = 0;
+    f.skill.cost = Math.max(f.skill.cost, 5); // habilidades de fusão são poderosas, mas caras
+    SP.STICKER[f.id] = f;
+  });
+
 
   /* ---------------------------------------------------------------- CHEFES */
   SP.BOSS_BASE_MULT = 1.0; // atributos base do chefe = sticker comum do mesmo nível × multiplicadores abaixo
@@ -715,6 +857,72 @@
         { name: 'Soco Que Apaga Universos', target: 'allEnemies', fx: [{ k: 'dmg', p: 1.15 }, { k: 'status', s: 'weaken', t: 2 }] },
         { name: 'Decreto Imperial', target: 'allEnemies', fx: [{ k: 'dispel' }, { k: 'dmg', p: 0.8 }, { k: 'energy', n: -1 }] },
         { name: 'Punho Estelar', target: 'enemy', fx: [{ k: 'dmg', p: 1.6 }] }
+      ] },
+    // ----------------------------------------------------------- ATO IV (inspirados no Ato VI do livro "V")
+    { id: 'plateia', name: 'A Plateia dos Deuses', el: 'light', stage: 65, act: 4,
+      title: 'Os Que Se Chamavam Deuses',
+      intro: 'Do lado de fora do multiverso, uma plateia inteira assiste universos colapsarem e aposta em qual cai primeiro. Hoje a aposta é você.',
+      tip: 'Trevas e Metal têm vantagem sobre ela. Ela cura a si mesma e se enche de bônus: use quem remove efeitos.',
+      hp: 24, atk: 1.85, def: 1.1, spd: 1.1, acts: 2, en: 6,
+      pattern: [
+        { name: 'Aplauso Ensurdecedor', target: 'allEnemies', fx: [{ k: 'dmg', p: 0.75 }, { k: 'status', s: 'stun', t: 1, chance: 0.2 }] },
+        { name: 'Aposta Alta', target: 'self', fx: [{ k: 'status', s: 'atkUp', t: 2 }, { k: 'status', s: 'regen', t: 2, v: 0.02 }] },
+        { name: 'Raio Divino', target: 'enemy', fx: [{ k: 'dmg', p: 1.4 }] },
+        { name: 'Vaia Cósmica', target: 'allEnemies', fx: [{ k: 'status', s: 'weaken', t: 2 }, { k: 'dispel' }] }
+      ],
+      enrage: [
+        { name: 'Todas as Fichas', target: 'allEnemies', fx: [{ k: 'dmg', p: 1.1 }] },
+        { name: 'Raio Divino', target: 'enemy', fx: [{ k: 'dmg', p: 1.6 }] },
+        { name: 'Bis!', target: 'self', fx: [{ k: 'heal', pct: 0.06 }, { k: 'haste' }] }
+      ] },
+    { id: 'rei_coelho', name: 'O Rei Coelho', el: 'nature', stage: 70, act: 4,
+      title: 'Pequeno e Furioso',
+      intro: 'Já foi o mais poderoso dos deuses de fora. Foi transformado em coelho — literalmente. Continua com todo o poder, e com uma raiva do tamanho de um universo.',
+      tip: 'Fogo, Gelo e Veneno têm vantagem sobre ele. Ele é rápido e ataca várias vezes: escudos ajudam.',
+      hp: 22, atk: 1.9, def: 1.0, spd: 1.5, acts: 2, en: 6,
+      pattern: [
+        { name: 'Patada Divina', target: 'enemy', fx: [{ k: 'dmg', p: 0.55, hits: 3 }] },
+        { name: 'Salto Entre Mundos', target: 'allEnemies', fx: [{ k: 'dmg', p: 0.7 }, { k: 'delay' }] },
+        { name: 'Toca Sagrada', target: 'self', fx: [{ k: 'status', s: 'dodge', t: 3 }, { k: 'heal', pct: 0.05 }] },
+        { name: 'Cenoura Cósmica', target: 'enemy', fx: [{ k: 'pctHp', p: 0.25, minP: 1.0 }] }
+      ],
+      enrage: [
+        { name: 'Fúria do Tamanho de um Universo', target: 'allEnemies', fx: [{ k: 'dmg', p: 1.05 }, { k: 'status', s: 'weaken', t: 2 }] },
+        { name: 'Patada Divina', target: 'enemy', fx: [{ k: 'dmg', p: 0.6, hits: 3 }] },
+        { name: 'Salto Duplo', target: 'enemy', fx: [{ k: 'dmg', p: 1.0 }, { k: 'haste', to: 'self' }] }
+      ] },
+    { id: 'trigg', name: 'Trigg, o Apagador', el: 'time', stage: 75, act: 4,
+      title: 'O Que Apaga Possibilidades',
+      intro: 'Nunca parou de tentar sair da prisão fora de tudo. Voltou com o poder de apagar a possibilidade das coisas terem existido. Seus golpes acontecem antes de você poder reagir.',
+      tip: 'Cósmico e Trevas têm vantagem sobre ele. Ele apaga energia e bônus: aja rápido.',
+      hp: 24, atk: 1.9, def: 1.15, spd: 1.3, acts: 2, en: 6,
+      pattern: [
+        { name: 'Apagar Possibilidade', target: 'enemy', fx: [{ k: 'dispel' }, { k: 'energy', n: -2 }, { k: 'dmg', p: 1.1 }] },
+        { name: 'A Rachadura', target: 'allEnemies', fx: [{ k: 'dmg', p: 0.75 }, { k: 'status', s: 'slow', t: 2 }] },
+        { name: 'Antes de Acontecer', target: 'enemy', fx: [{ k: 'dmg', p: 1.0 }, { k: 'haste', to: 'self' }] },
+        { name: 'Prisão Fora de Tudo', target: 'enemy', fx: [{ k: 'status', s: 'freeze', t: 1 }, { k: 'dmg', p: 0.8 }] }
+      ],
+      enrage: [
+        { name: 'Nunca Existiu', target: 'allEnemies', fx: [{ k: 'dispel' }, { k: 'dmg', p: 1.05 }, { k: 'energy', n: -1 }] },
+        { name: 'Apagar Possibilidade', target: 'enemy', fx: [{ k: 'dmg', p: 1.5 }] },
+        { name: 'Tempo Roubado', target: 'self', fx: [{ k: 'heal', pct: 0.08 }, { k: 'cleanse' }], once: true }
+      ] },
+    { id: 'nivel_de_cima', name: 'O Nível de Cima', el: 'cosmic', stage: 80, act: 4,
+      title: 'Existem Níveis',
+      intro: 'Não é uma luta. É uma demonstração de que existem níveis — e de que você nunca esteve no de cima. Até agora.',
+      tip: 'Só Gravidade tem vantagem. Leve curas, revivências e o máximo de força que conseguir. Ele fica muito mais forte na fúria.',
+      hp: 28, atk: 2.0, def: 1.2, spd: 1.15, acts: 2, en: 6,
+      pattern: [
+        { name: 'Escala', target: 'allEnemies', fx: [{ k: 'dmg', p: 0.85 }] },
+        { name: 'Olhar de Cima', target: 'allEnemies', fx: [{ k: 'status', s: 'weaken', t: 2 }, { k: 'energy', n: -1 }] },
+        { name: 'Toque do Topo', target: 'enemy', fx: [{ k: 'pctHp', p: 0.3, minP: 1.1 }] },
+        { name: 'Escala', target: 'allEnemies', fx: [{ k: 'dmg', p: 0.85 }] }
+      ],
+      enrage: [
+        { name: 'O Nível Seguinte', target: 'self', fx: [{ k: 'status', s: 'atkUp', t: 3 }, { k: 'shield', pct: 0.08 }, { k: 'cleanse' }], once: true },
+        { name: 'Demonstração', target: 'allEnemies', fx: [{ k: 'dmg', p: 1.15 }, { k: 'dispel' }] },
+        { name: 'Toque do Topo', target: 'enemy', fx: [{ k: 'pctHp', p: 0.35, minP: 1.2 }] },
+        { name: 'Escala', target: 'allEnemies', fx: [{ k: 'dmg', p: 1.0 }] }
       ] }
   ];
   SP.BOSS = {};
@@ -733,14 +941,19 @@
     { name: 'A Dimensão-Espelho', stages: [41, 45], bg: ['#0a1a2a', '#5a7a9a'], act: 3 },
     { name: 'Nave do Tamanho de uma Lua', stages: [46, 50], bg: ['#0a0e16', '#3a4a6a'], act: 3 },
     { name: 'O Sonho Eterno',     stages: [51, 55], bg: ['#0c0414', '#3a0a3a'], act: 3 },
-    { name: 'A Borda do Multiverso', stages: [56, 60], bg: ['#000000', '#2a1a5a'], act: 3 }
+    { name: 'A Borda do Multiverso', stages: [56, 60], bg: ['#000000', '#2a1a5a'], act: 3 },
+    { name: 'O Lado de Fora',     stages: [61, 65], bg: ['#1a1408', '#7a6a2a'], act: 4 },
+    { name: 'O Mundo dos Coelhos', stages: [66, 70], bg: ['#0a1a0a', '#3a7a3a'], act: 4 },
+    { name: 'A Prisão Fora de Tudo', stages: [71, 75], bg: ['#06100f', '#1a5a5a'], act: 4 },
+    { name: 'A Porta',            stages: [76, 80], bg: ['#000000', '#5a4a2a'], act: 4 }
   ];
   SP.REGIONS.forEach(r => { r.act = r.act || 1; });
-  SP.STAGE_COUNT = 60;
+  SP.STAGE_COUNT = 80;
+  SP.ACT3_END = 60;
   SP.ACT1_END = 20;
   SP.ACT2_END = 40;
-  SP.ACTS = { 1: 'Ato I — O Despertar', 2: 'Ato II — O Devorador de Poderes', 3: 'Ato III — Além da Borda' };
-  SP.starsForLevel = lvl => Math.max(1, Math.min(6, Math.ceil(lvl / 10)));
+  SP.ACTS = { 1: 'Ato I — O Despertar', 2: 'Ato II — O Devorador de Poderes', 3: 'Ato III — Além da Borda', 4: 'Ato IV — A Porta' };
+  SP.starsForLevel = lvl => Math.max(1, Math.min(7, Math.ceil(lvl / 10)));
   // Equipes inimigas de cada fase (fases de chefe ficam de fora).
   SP.STAGE_ENEMIES = {
     1: ['brasinha', 'faisca'],
@@ -792,13 +1005,31 @@
     56: ['prismora', 'gravitar', 'serafim_eclipse'],
     57: ['void_king', 'imperador_trovao', 'titanide_terra'],
     58: ['aeon', 'frost_queen', 'kraken_abissal'],
-    59: ['prismora', 'void_king', 'serafim_eclipse']
+    59: ['prismora', 'void_king', 'serafim_eclipse'],
+    // Ato IV
+    61: ['gato_astronauta', 'nebulosa_viva', 'lobo_solar'],
+    62: ['vespa_neon', 'tubarao_trovao', 'dragao_jade'],
+    63: ['cavaleiro_obsidiana', 'fenix_glacial', 'zumbeia'],
+    64: ['relojoeiro_tita', 'deus_apostador', 'kraken_abissal'],
+    66: ['dragao_jade', 'hierofante_verde', 'coelho_ampulheta'],
+    67: ['nebulosa_viva', 'santo_espada', 'titanide_terra'],
+    68: ['fenix_glacial', 'fray_redimido', 'tubarao_trovao'],
+    69: ['coroa_estelar', 'relojoeiro_tita', 'serafim_eclipse'],
+    71: ['possibilidade_perdida', 'aeon', 'cavaleiro_obsidiana'],
+    72: ['coelho_divino', 'nebulosa_viva', 'golem_cristal'],
+    73: ['void_king', 'fenix_glacial', 'guarda_estelar'],
+    74: ['santo_espada', 'prismora', 'relojoeiro_tita'],
+    76: ['coroa_estelar', 'omega_desperto', 'hierofante_verde'],
+    77: ['possibilidade_perdida', 'coelho_divino', 'nebulosa_viva'],
+    78: ['santo_espada', 'aeon', 'fenix_glacial'],
+    79: ['coroa_estelar', 'void_king', 'deus_apostador']
   };
 
   SP.stageInfo = function (n) {
     const boss = SP.BOSSES.find(b => b.stage === n) || null;
     const level = n <= SP.ACT1_END ? Math.max(1, Math.min(30, Math.round(1 + (n - 1) * 1.45)))
-      : n <= SP.ACT2_END ? Math.min(50, 30 + (n - SP.ACT1_END)) : Math.min(60, 50 + Math.ceil((n - SP.ACT2_END) / 2));
+      : n <= SP.ACT2_END ? Math.min(50, 30 + (n - SP.ACT1_END)) : n <= SP.ACT3_END ? Math.min(60, 50 + Math.ceil((n - SP.ACT2_END) / 2))
+      : Math.min(70, 60 + Math.ceil((n - SP.ACT3_END) / 2));
     const enemyLevel = Math.max(1, level - (n <= 3 ? 1 : n <= 10 ? 2 : n <= 15 ? 3 : n <= 20 ? 5 : n <= 40 ? 3 : 2));
     const stars = SP.starsForLevel(level);
     const region = SP.REGIONS.find(r => n >= r.stages[0] && n <= r.stages[1]);
@@ -853,20 +1084,21 @@
 
   /* ---------------------------------------------------------------- PROGRESSÃO */
   SP.PROG = {
-    maxStars: 6,
+    maxStars: 7,
     levelCap: stars => stars * 10,
     xpToNext: level => 30 + level * 20,
     levelGrowth: 0.07,          // +7% dos atributos base por nível
     starGrowth: 0.22,           // +22% por estrela acima de 1
     evoCoins: stars => 250 * stars,
-    evoFrags: (rarity, stars) => Math.round(SP.RARITY[rarity].evoFrags * [0, 1, 2.5, 4, 6, 9][stars]),
-    evoEssence: stars => [0, 0, 0, 2, 4, 8][stars] || 0,   // estrelas 4, 5 e 6 exigem Essência de chefe
-    evoCrystals: stars => (stars === 5 ? 20 : 0),          // a 6ª estrela (Transcendente) também pede Cristais
+    evoFrags: (rarity, stars) => Math.round(SP.RARITY[rarity].evoFrags * [0, 1, 2.5, 4, 6, 9, 13][stars]),
+    evoEssence: stars => [0, 0, 0, 2, 4, 8, 12][stars] || 0,   // estrelas 4 a 7 exigem Essência de chefe
+    evoCrystals: stars => ({ 5: 20, 6: 40 })[stars] || 0,       // 6ª e 7ª estrelas também pedem Cristais
     trainCost: 80,              // moedas por treino
     trainXp: 60,                // XP por treino
     awakenedPower: 1.25,        // estrela 3: habilidade desperta (+25% de poder, -1 de custo)
     supremePower: 1.5,          // estrela 5: forma suprema (+50% de poder no total)
     transcendPower: 1.75,       // estrela 6: transcendente (+75% de poder no total)
+    divinePower: 2.0,           // estrela 7: divino (+100% de poder no total)
     startCoins: 300,
     starters: ['brasinha', 'gotinha', 'seixo']
   };
@@ -917,6 +1149,14 @@
     { id: 'm_star6',     name: 'Transcendência',         desc: 'Evolua um sticker até 6 estrelas.',       stat: 'maxStars',     goal: 6,  reward: { coins: 5000, crystals: 15 } },
     { id: 'm_level60',   name: 'Acima do Limite',        desc: 'Leve um sticker ao nível 60.',            stat: 'maxLevel',     goal: 60, reward: { coins: 5000, essence: 5 } },
     { id: 'm_collect76', name: 'Álbum Infinito',         desc: 'Tenha todos os 76 stickers do álbum.',    stat: 'uniqueOwned',  goal: 76, reward: { coins: 20000, essence: 15, crystals: 40 } },
+    { id: 'm_act4',      name: 'Do Lado de Fora',         desc: 'Vença a fase 70 (Ato IV).',               stat: 'cleared',      goal: 70, reward: { coins: 12000, essence: 8, crystals: 25 } },
+    { id: 'm_porta',     name: 'A Porta',                 desc: 'Vença a fase 80 e derrote O Nível de Cima.', stat: 'cleared',   goal: 80, reward: { coins: 30000, essence: 20, crystals: 60, tokens: { premium: 5 } } },
+    { id: 'm_boss16',    name: 'Ninguém Está no Topo',    desc: 'Derrote os 16 chefes.',                   stat: 'bossKinds',    goal: 16, reward: { coins: 15000, essence: 10 } },
+    { id: 'm_star7',     name: 'Divino',                  desc: 'Evolua um sticker até 7 estrelas.',       stat: 'maxStars',     goal: 7,  reward: { coins: 10000, crystals: 30 } },
+    { id: 'm_fusion1',   name: 'Laboratório Aberto',      desc: 'Faça 1 fusão.',                           stat: 'fusions',      goal: 1,  reward: { coins: 5000, essence: 3 } },
+    { id: 'm_fusion8',   name: 'Mestre da Fusão',         desc: 'Faça 8 fusões diferentes.',               stat: 'fusions',      goal: 8,  reward: { coins: 20000, essence: 12, crystals: 40 } },
+    { id: 'm_raid',      name: 'Contra o Gigante',        desc: 'Cause 1 milhão de dano total ao Chefe Mundial.', stat: 'raidTotal', goal: 1000000, reward: { coins: 10000, crystals: 20 } },
+    { id: 'm_collect88', name: 'O Álbum da Porta',        desc: 'Tenha todos os 88 stickers do álbum.',    stat: 'uniqueOwned',  goal: 88, reward: { coins: 40000, essence: 25, crystals: 60 } },
     { id: 'm_frame',     name: 'Estilo Próprio',         desc: 'Compre uma moldura.',                     stat: 'framesOwned',  goal: 2,  reward: { coins: 500, crystals: 3 } }
   ];
 
@@ -980,6 +1220,22 @@
     checkpoint: floor => Math.floor((floor - 1) / 10) * 10 + 1,
     rewards: floor => ({ coins: 60 + floor * 14, fragments: 6 + Math.floor(floor / 2), xp: 30 + floor * 6 }),
     bossBonus: floor => ({ essence: 1 + Math.floor(floor / 30), tokens: { premium: 1 } })
+  };
+
+  /* ---------------------------------------------------------------- CHEFE MUNDIAL
+     Um chefe gigante que muda toda semana. 3 tentativas por dia, 10 rodadas
+     cada; o que conta é o dano causado. Recompensa por faixa de dano. */
+  SP.RAID = {
+    attempts: 3, rounds: 10, level: 65, hpMult: 40, atkMult: 1.3,
+    tiers: [
+      { dmg: 10000, reward: { coins: 1500 } },
+      { dmg: 30000, reward: { coins: 3000, fragments: 80 } },
+      { dmg: 70000, reward: { coins: 6000, crystals: 4 } },
+      { dmg: 140000, reward: { coins: 10000, crystals: 8, essence: 2 } },
+      { dmg: 250000, reward: { coins: 16000, crystals: 14, essence: 4 } }
+    ],
+    // modificador da semana, além do chefe
+    mods: ['espinhos', 'vampiros', 'blindados', 'velozes', 'furia', 'pressa']
   };
 
   SP.bossTierRewards = function (tier) {

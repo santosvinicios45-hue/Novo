@@ -12,7 +12,7 @@ globalThis.localStorage = {
   setItem: (k, v) => { mem[k] = String(v); },
   removeItem: k => { delete mem[k]; }
 };
-['data.js', 'core.js', 'battle.js', 'art.js', 'art2.js', 'art3.js'].forEach(f => require(path.join(__dirname, '..', 'js', f)));
+['data.js', 'core.js', 'battle.js', 'art.js', 'art2.js', 'art3.js', 'art4.js'].forEach(f => require(path.join(__dirname, '..', 'js', f)));
 const SP = globalThis.SP;
 const Core = SP.Core, Battle = SP.Battle;
 
@@ -42,7 +42,7 @@ test('15 elementos e todos usados', () => {
   SP.ELEMENTS.forEach(e => assert(SP.STICKERS.some(s => s.el === e.id), 'elemento sem sticker: ' + e.id));
 });
 test('todo sticker tem arte própria, história, habilidade e efeitos válidos', () => {
-  const known = ['dmg', 'chain', 'pctHp', 'status', 'heal', 'shield', 'energy', 'haste', 'delay', 'cleanse', 'dispel', 'selfDmg', 'reviveOrHeal'];
+  const known = ['dmg', 'chain', 'pctHp', 'status', 'heal', 'shield', 'energy', 'haste', 'delay', 'cleanse', 'dispel', 'selfDmg', 'reviveOrHeal', 'reviveAll'];
   SP.STICKERS.forEach(s => {
     assert(SP.Art.has(s.id), 'sem arte: ' + s.id);
     assert(s.story && s.story.length > 30, 'sem história: ' + s.id);
@@ -61,8 +61,9 @@ test('as artes geradas são diferentes entre si', () => {
   const arts = SP.STICKERS.map(s => strip(SP.Art.sticker(s.id)));
   eq(new Set(arts).size, arts.length, 'existem artes idênticas');
 });
-test('12 chefes (4 por ato), cada um com arte e sticker exclusivo', () => {
-  eq(SP.BOSSES.length, 12);
+test('16 chefes (4 por ato), cada um com arte e sticker exclusivo', () => {
+  eq(SP.BOSSES.length, 16);
+  eq(SP.BOSSES.filter(b => b.act === 4).length, 4);
   eq(SP.BOSSES.filter(b => b.act === 2).length, 4);
   eq(SP.BOSSES.filter(b => b.act === 3).length, 4);
   SP.BOSSES.forEach(b => { assert(SP.Art.boss(b.id).length > 500); assert(SP.STICKER[b.reward].bossOnly === b.id); });
@@ -408,13 +409,13 @@ test('mil batalhas simuladas terminam sem erro, com vitórias e derrotas', () =>
   }
   assert(wins > 200 && wins < 800, 'distribuição estranha: ' + wins + '/' + total);
 });
-test('as 12 lutas de chefe podem ser vencidas por uma equipe forte e perdidas por uma fraca', () => {
+test('as 16 lutas de chefe podem ser vencidas por uma equipe forte e perdidas por uma fraca', () => {
   fresh();
   SP.BOSSES.forEach(bs => {
     const L = SP.stageInfo(bs.stage).level;
     const st = SP.starsForLevel(L);
     const strongTeam = { fray: ['inferno_rex', 'solar_titan', 'chronos'], voss: ['inferno_rex', 'solar_titan', 'chronos'], sombra: ['kraken_abissal', 'serafim_eclipse', 'hierofante_verde'], imperador_estelar: ['kraken_abissal', 'serafim_eclipse', 'hierofante_verde'] }[bs.id]
-      || (bs.act === 2 ? ['frost_queen', 'void_king', 'serafim_aurora'] : ['volt_dragon', 'serafim_aurora', 'terra_golem']);
+      || (bs.act === 4 ? ['fx_big_crunch', 'fx_fenix_aurora', 'fx_bastiao'] : bs.act === 2 ? ['frost_queen', 'void_king', 'serafim_aurora'] : ['volt_dragon', 'serafim_aurora', 'terra_golem']);
     let strongWins = 0, weakWins = 0;
     for (let i = 0; i < 40; i++) {
       const s = Battle.create({ players: strongTeam.map(id => ({ id, level: L + 2, stars: st })), boss: { id: bs.id, level: L }, rng: seeded(i + 1) });
@@ -513,7 +514,7 @@ test('dados inválidos são corrigidos (sanitize)', () => {
   const st = Core.sanitize({ coins: -50, fragments: 'abc', owned: { brasinha: { level: 999, stars: 9, xp: -3 }, naoexiste: { level: 1 } }, team: ['naoexiste', 'brasinha', 'brasinha'], settings: { volume: 7, battleSpeed: 99 } });
   eq(st.coins, 0); eq(st.fragments, 0);
   assert(!st.owned.naoexiste);
-  eq(st.owned.brasinha.stars, 6); eq(st.owned.brasinha.level, 60); eq(st.owned.brasinha.xp, 0);
+  eq(st.owned.brasinha.stars, 7); eq(st.owned.brasinha.level, 70); eq(st.owned.brasinha.xp, 0);
   eq(st.team.length, 1);
   eq(st.settings.volume, 1); eq(st.settings.battleSpeed, 1);
 });
@@ -531,7 +532,7 @@ test('exportar/importar e reiniciar', () => {
 
 /* ------------------------------------------------------------------ Ato II e pós-jogo */
 console.log('\nAto II e Torre Infinita');
-test('60 fases: todas as fases normais têm inimigos válidos e os níveis só sobem', () => {
+test('80 fases: todas as fases normais têm inimigos válidos e os níveis só sobem', () => {
   let last = 0;
   for (let n = 1; n <= SP.STAGE_COUNT; n++) {
     const info = SP.stageInfo(n);
@@ -539,7 +540,8 @@ test('60 fases: todas as fases normais têm inimigos válidos e os níveis só s
     if (info.boss) eq(info.boss.stage, n); else { const e = Core.stageEnemies(n); assert(e && e.length === 3 || n <= 2, 'fase ' + n); e.forEach(x => assert(SP.STICKER[x.id], x.id)); }
   }
   eq(SP.stageInfo(40).level, 50);
-  eq(SP.STAGE_COUNT, 60); eq(SP.stageInfo(60).level, 60);
+  eq(SP.stageInfo(60).level, 60);
+  eq(SP.STAGE_COUNT, 80); eq(SP.stageInfo(80).level, 70);
 });
 test('evoluir até 5 estrelas: estrelas 4 e 5 custam Essência; estrela 5 = Forma Suprema', () => {
   fresh();
@@ -711,7 +713,7 @@ test('A Van: segundo segredo, só depois do V; com o V na equipe ele começa com
 /* ------------------------------------------------------------------ atualização 4 */
 console.log('\nAto III, 6ª estrela e treino/evolução automáticos');
 test('Ato III: 20 fases novas (41–60), 4 chefes com recompensas exclusivas e 16 stickers novos', () => {
-  eq(SP.STICKERS.length, 76);
+  eq(SP.STICKERS.filter(s => s.num <= 76).length, 76);
   for (let n = 41; n <= 60; n++) { const i = SP.stageInfo(n); assert(i.region.act === 3); if (!i.boss) eq(Core.stageEnemies(n).length, 3); }
   ['fray', 'voss', 'sombra', 'imperador_estelar'].forEach(b => assert(SP.BOSS[b] && SP.STICKER[SP.BOSS[b].reward].bossOnly === b));
   fresh();
@@ -735,7 +737,7 @@ test('6ª estrela: custa Essência e Cristais, libera nível 60 e +75% de poder'
   Core.grantXp('brasinha', 1e8); eq(o.level, 60);
   const s6 = Core.skillFor('brasinha', 6), s1 = Core.skillFor('brasinha', 1);
   assert(s6.transcend); near(s6.fx[0].p, s1.fx[0].p * SP.PROG.transcendPower, 0.011);
-  assert(Core.evoInfo('brasinha').maxed);
+  assert(!Core.evoInfo('brasinha').maxed, 'ainda existe a 7ª estrela');
 });
 test('Treinar ao máximo: gasta moedas até acabar ou até o limite da estrela', () => {
   fresh();
@@ -758,10 +760,111 @@ test('Evoluir ao máximo: treina e evolui em sequência e diz por que parou', ()
   assert(/Essência/.test(r.stop), r.stop);
   SP.state.essence = 100; SP.state.crystals = 100;
   const r2 = Core.evolveMax('seixo');
-  eq(SP.state.owned.seixo.stars, 6); eq(SP.state.owned.seixo.level, 60); assert(/máxima/.test(r2.stop));
+  eq(SP.state.owned.seixo.stars, 7); eq(SP.state.owned.seixo.level, 70); assert(/máxima/.test(r2.stop));
   fresh(); SP.state.coins = 500;
   const r3 = Core.evolveMax('brasinha');
   assert(r3.ok && r3.evolutions === 0 && /moedas/.test(r3.stop), r3.stop);
+});
+
+/* ------------------------------------------------------------------ atualização 5: A Porta */
+console.log('\nA Porta: Ato IV, fusões, Chefe Mundial, sinergias e 7ª estrela');
+test('Ato IV: fases 61–80, 4 chefes com recompensas exclusivas e 88 stickers no álbum', () => {
+  eq(SP.STICKERS.length, 88);
+  for (let n = 61; n <= 80; n++) { const i = SP.stageInfo(n); assert(i.region.act === 4, 'fase ' + n); if (!i.boss) eq(Core.stageEnemies(n).length, 3); }
+  ['plateia', 'rei_coelho', 'trigg', 'nivel_de_cima'].forEach(b => assert(SP.BOSS[b] && SP.BOSS[b].act === 4 && SP.STICKER[SP.BOSS[b].reward].bossOnly === b, b));
+  fresh();
+  const r = Core.applyBattleResult({ kind: 'stage', stage: 80, team: ['brasinha'], win: true });
+  eq(r.sticker, 'fragmento_topo'); eq(SP.state.campaign.cleared, 80);
+});
+test('7ª estrela: Divina, nível 70, +100% de poder', () => {
+  fresh();
+  const o = SP.state.owned.brasinha; o.stars = 6; o.level = 60;
+  SP.state.coins = 1e7; SP.state.fragments = 1e6; SP.state.essence = 100; SP.state.crystals = 0;
+  assert(!Core.evolve('brasinha').ok, 'sem cristais');
+  SP.state.crystals = 40;
+  assert(Core.evolve('brasinha').ok); eq(o.stars, 7); eq(SP.state.crystals, 0);
+  Core.grantXp('brasinha', 1e9); eq(o.level, 70);
+  const s7 = Core.skillFor('brasinha', 7), s1 = Core.skillFor('brasinha', 1);
+  assert(s7.divine); near(s7.fx[0].p, s1.fx[0].p * SP.PROG.divinePower, 0.011);
+  assert(Core.evoInfo('brasinha').maxed);
+});
+test('Fusão: pede os dois stickers com 3★, custa recursos, mantém os originais e só funciona uma vez', () => {
+  fresh();
+  const f = SP.FUSIONS.find(x => x.id === 'fx_vaporex');
+  assert(f && SP.STICKER.fx_vaporex.fusion && SP.Art.has('fx_vaporex'));
+  assert(!SP.STICKERS.some(s => s.id === 'fx_vaporex'), 'fusão não entra no álbum');
+  SP.PACKS.forEach(p => assert(!Core.packOdds(p.id).stickers.some(x => SP.STICKER[x.id].fusion), 'fusão em pacote'));
+  const C = SP.FUSION_COST;
+  SP.state.coins = C.coins; SP.state.fragments = C.fragments; SP.state.essence = C.essence;
+  assert(/dois/.test(Core.fuse('fx_vaporex').reason));
+  Core.addSticker('inferno_rex', 't'); Core.addSticker('frost_queen', 't');
+  assert(/estrelas/.test(Core.fuse('fx_vaporex').reason));
+  SP.state.owned.inferno_rex.stars = 3; SP.state.owned.frost_queen.stars = 3;
+  SP.state.essence = C.essence - 1;
+  assert(/Essência/.test(Core.fuse('fx_vaporex').reason));
+  SP.state.essence = C.essence;
+  assert(Core.fuse('fx_vaporex').ok);
+  assert(SP.state.owned.fx_vaporex && SP.state.owned.inferno_rex && SP.state.owned.frost_queen);
+  eq(SP.state.coins, 0); eq(SP.state.fragments, 0); eq(SP.state.essence, 0);
+  assert(!Core.fuse('fx_vaporex').ok, 'fundiu duas vezes');
+  eq(Core.missionValue('fusions'), 1);
+  const saved = Core.sanitize(JSON.parse(JSON.stringify(SP.state)));
+  assert(saved.owned.fx_vaporex, 'fusão some ao salvar');
+  SP.FUSIONS.forEach(x => assert(SP.STICKER[x.id].skill.cost >= 5 && SP.STICKER[x.a] && SP.STICKER[x.b], x.id));
+});
+test('Receita secreta só aparece com os dois segredos', () => {
+  fresh();
+  const sec = SP.FUSIONS.find(x => x.secretRecipe);
+  assert(sec && !Core.fusionKnown(sec));
+  SP.state.campaign.cleared = 40; Core.unlockV();
+  assert(!Core.fusionKnown(sec));
+  Core.unlockVan();
+  assert(Core.fusionKnown(sec));
+  SP.FUSIONS.filter(x => !x.secretRecipe).forEach(x => assert(Core.fusionKnown(x)));
+});
+test('Sinergia: 2 do mesmo elemento = +10% ataque; 3 = +20% ataque e +10% vida', () => {
+  eq(Battle.synergyOf(['fire', 'water', 'ice']), null);
+  eq(Battle.synergyOf(['fire', 'fire', 'ice']).atk, 0.1);
+  const s3 = Battle.synergyOf(['fire', 'fire', 'fire']); eq(s3.atk, 0.2); eq(s3.hp, 0.1);
+  const base = Battle.create({ players: [{ id: 'brasinha', level: 20 }, { id: 'gotinha', level: 20 }], enemies: [{ id: 'seixo', level: 20 }] });
+  const syn = Battle.create({ players: [{ id: 'brasinha', level: 20 }, { id: 'inferno_rex', level: 20 }], enemies: [{ id: 'seixo', level: 20 }] });
+  assert(!base.synergy.player && syn.synergy.player.el === 'fire');
+  eq(syn.units[0].atk, Math.round(base.units[0].atk * 1.1));
+});
+test('Chefe Mundial: 3 tentativas por dia, faixas de recompensa, recorde semanal', () => {
+  fresh();
+  const now = Date.UTC(2026, 9, 13, 12);
+  const spec = Core.raidSpec(now);
+  assert(SP.BOSS[spec.boss.id] && spec.mods.length === 1);
+  eq(Core.raidAttemptsLeft(now), 3);
+  eq(Core.raidTier(5000), -1); eq(Core.raidTier(10000), 0); eq(Core.raidTier(300000), 4);
+  const c = SP.state.coins;
+  const r = Core.applyRaid(35000, ['brasinha'], now);
+  assert(r.ok && r.tier === 1 && r.record); eq(SP.state.coins, c + 3000);
+  Core.applyRaid(1000, ['brasinha'], now); Core.applyRaid(1000, ['brasinha'], now);
+  eq(Core.raidAttemptsLeft(now), 0);
+  assert(!Core.applyRaid(1e6, ['brasinha'], now).ok, 'tentou além do limite');
+  eq(SP.state.raid.best, 35000); eq(SP.state.raid.total, 37000);
+  const next = now + 7 * 864e5;
+  eq(Core.raidAttemptsLeft(next), 3);
+  Core.applyRaid(2000, [], next);
+  eq(SP.state.raid.best, 2000, 'recorde da semana reinicia');
+  // a batalha termina por tempo, sem vencedor
+  const b = Battle.create({ players: [{ id: 'serafim_aurora', level: 60, stars: 6 }], boss: spec.boss, mods: spec.mods, maxRounds: SP.RAID.rounds, rng: seeded(3) });
+  Battle.simulate(b);
+  assert(b.over && (b.winner === 'time' || b.winner === 'enemy'), b.winner);
+});
+test('Segredos novos: um só às quintas, outro quando o V traz alguém de volta', () => {
+  fresh();
+  const thu = Date.UTC(2026, 9, 15, 12), wed = Date.UTC(2026, 9, 14, 12);
+  eq(Core.unlockGustavo(thu).reason, 'notYet');
+  eq(Core.unlockTeo().reason, 'notYet');
+  SP.state.campaign.cleared = 40; Core.unlockV();
+  eq(Core.unlockGustavo(wed).reason, 'notYet');
+  assert(Core.unlockGustavo(thu).ok && SP.state.owned.gustavo);
+  eq(Core.unlockGustavo(thu).reason, 'already');
+  assert(Core.unlockTeo().ok && SP.state.owned.teo);
+  ['gustavo', 'teo'].forEach(id => { assert(SP.Art.has(id)); assert(!SP.STICKERS.some(s => s.id === id)); });
 });
 
 /* ------------------------------------------------------------------ economia */

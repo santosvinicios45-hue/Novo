@@ -75,8 +75,35 @@
       if (v && team.some(u => u.id === 'van')) { v.en = v.maxEn; b.vanBond = true; }
     });
     applyMods(b, opts.mods || []);
+    applySynergy(b);
+    if (opts.maxRounds) b.maxRounds = opts.maxRounds;
     return b;
   };
+
+  /* ---------------------------------------------------------------- sinergias de equipe
+     2 do mesmo elemento: Ataque +10%. 3 do mesmo elemento: Ataque +20% e Vida +10%. */
+  Battle.synergyOf = function (els) {
+    const c = {};
+    els.forEach(e => { c[e] = (c[e] || 0) + 1; });
+    const best = Object.keys(c).sort((x, y) => c[y] - c[x])[0];
+    const n = best ? c[best] : 0;
+    if (n >= 3) return { el: best, n, atk: 0.2, hp: 0.1 };
+    if (n >= 2) return { el: best, n, atk: 0.1, hp: 0 };
+    return null;
+  };
+  function applySynergy(b) {
+    b.synergy = {};
+    ['player', 'enemy'].forEach(side => {
+      const team = b.units.filter(u => u.side === side && !u.isBoss);
+      const syn = Battle.synergyOf(team.map(u => u.el));
+      if (!syn) return;
+      b.synergy[side] = syn;
+      team.filter(u => u.el === syn.el).forEach(u => {
+        u.atk = Math.round(u.atk * (1 + syn.atk));
+        if (syn.hp) { u.maxHp = Math.round(u.maxHp * (1 + syn.hp)); u.hp = u.maxHp; }
+      });
+    });
+  }
 
   /* ---------------------------------------------------------------- modificadores (Modo Pesadelo) */
   function applyMods(b, mods) {
@@ -456,6 +483,13 @@
     while (!u && guard++ < 50) {
       if (!b.queue.length) {
         b.round++;
+        if (b.maxRounds && b.round > b.maxRounds) {
+          // Chefe Mundial: o tempo acaba e o que vale é o dano causado
+          b.over = true; b.winner = 'time'; b.timeout = true;
+          ev.push({ t: 'log', text: 'Fim das rodadas! Contando o dano causado...' });
+          ev.push({ t: 'end', winner: 'time' });
+          return { actor: null, events: ev, canAct: false };
+        }
         if (b.round > MAX_ROUNDS) {
           b.over = true; b.winner = 'enemy'; b.timeout = true;
           ev.push({ t: 'log', text: 'O tempo acabou! A batalha foi perdida por limite de rodadas.' });

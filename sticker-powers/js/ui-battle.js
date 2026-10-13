@@ -13,6 +13,7 @@
       <div class="tabs">
         <button class="tab ${tab === 'campaign' ? 'on' : ''}" data-t="campaign">🗺️ Campanha</button>
         <button class="tab ${tab === 'bosses' ? 'on' : ''}" data-t="bosses">👑 Chefes</button>
+        <button class="tab ${tab === 'raid' ? 'on' : ''}" data-t="raid">🌍 Chefe Mundial</button>
         <button class="tab ${tab === 'tower' ? 'on' : ''}" data-t="tower">🗼 Torre Infinita</button>
         <button class="tab ${tab === 'nightmare' ? 'on' : ''} ${Core.nightmareUnlocked() ? '' : 'tab-locked'}" data-t="nightmare">😈 Pesadelo</button>
         <button class="tab ${tab === 'duel' ? 'on' : ''}" data-t="duel">👥 Duelo Local</button>
@@ -23,6 +24,7 @@
     if (tab === 'campaign') campaign(body);
     else if (tab === 'bosses') bosses(body);
     else if (tab === 'tower') tower(body);
+    else if (tab === 'raid') raid(body);
     else if (tab === 'nightmare') nightmare(body);
     else if (tab === 'duel') duel(body);
     else quick(body);
@@ -30,7 +32,7 @@
 
   function campaign(body) {
     const cleared = SP.state.campaign.cleared;
-    const actStart = { 1: 0, 2: SP.ACT1_END, 3: SP.ACT2_END };
+    const actStart = { 1: 0, 2: SP.ACT1_END, 3: SP.ACT2_END, 4: SP.ACT3_END };
     const locked = act => cleared < actStart[act];
     body.innerHTML = SP.REGIONS.map((r, i) => (i === 0 || r.act !== SP.REGIONS[i - 1].act ? `<h2 class="section act-title">${SP.ACTS[r.act]}${locked(r.act) ? ` <span class="small-txt muted">🔒 vença a fase ${actStart[r.act]} para liberar</span>` : ''}</h2>` : '') + `<div class="region ${locked(r.act) ? 'act-locked' : ''}" style="background:linear-gradient(135deg, ${r.bg[0]}, ${r.bg[1]})">
       <h4>${UI.esc(r.name)} <span class="small-txt muted">· Fases ${r.stages[0]}–${r.stages[1]}</span></h4>
@@ -101,6 +103,29 @@
       const cfg = { kind: 'tower', floor: tw.floor };
       if (isBoss) UI.bossIntro(spec.boss.id, spec.level, () => UI.go('team', cfg));
       else UI.go('team', cfg);
+    });
+  }
+
+  /* ---------------------------------------------------------------- CHEFE MUNDIAL */
+  function raid(body) {
+    const sp = Core.raidSpec(), R = SP.RAID, B = SP.BOSS[sp.boss.id];
+    const left = Core.raidAttemptsLeft();
+    const best = SP.state.raid.week === sp.week ? SP.state.raid.best : 0;
+    const M = SP.MODIFIER[sp.mods[0]];
+    body.innerHTML = `<div class="panel raid-panel">
+      <div class="raid-art">${Art.boss(B.id)}</div>
+      <div class="raid-info"><div class="badge" style="background:#ff2e7e">CHEFE MUNDIAL DA SEMANA</div>
+        <h3 style="font-family:var(--font-display);margin:6px 0 2px">${UI.esc(B.name)} Gigante</h3>
+        <div class="small-txt muted">Nível ${R.level} · vida ×${R.hpMult} · ${R.rounds} rodadas por tentativa · troca em ${UI.fmtTime(sp.ends - Date.now())}</div>
+        <div class="small-txt" style="margin-top:6px">${M.icon} <b>${UI.esc(M.name)}:</b> ${UI.esc(M.desc)}</div>
+        <p class="small-txt muted">Ninguém derrota o Chefe Mundial: o objetivo é causar o máximo de dano em ${R.rounds} rodadas. Cada tentativa dá a recompensa da faixa de dano que você alcançar.</p>
+        <div class="row"><span class="badge">Tentativas hoje: ${left}/${R.attempts}</span><span class="badge">Recorde da semana: ${UI.fmt(best)}</span><span class="badge">Dano total: ${UI.fmt(SP.state.raid.total)}</span></div>
+        <div class="raid-tiers">${R.tiers.map((t, i) => `<div class="raid-tier ${best >= t.dmg ? 'done' : ''}"><b>${UI.fmt(t.dmg)}</b><span>${Core.rewardText(t.reward)}</span></div>`).join('')}</div>
+        <div class="row" style="margin-top:12px"><button class="btn big red" id="rdGo" ${left ? '' : 'disabled'}>${left ? 'Atacar o gigante!' : 'Volte amanhã'}</button></div>
+      </div></div>`;
+    UI.$('#rdGo', body).addEventListener('click', () => {
+      UI.sfx('click');
+      UI.bossIntro(B.id, R.level, () => UI.go('team', { kind: 'raid' }));
     });
   }
 
@@ -261,6 +286,10 @@
       const t = Core.towerSpec(cfg.floor);
       return t.boss ? { boss: t.boss } : { enemies: t.enemies };
     }
+    if (cfg.kind === 'raid') {
+      const t = Core.raidSpec();
+      return { boss: t.boss, mods: t.mods, maxRounds: SP.RAID.rounds };
+    }
     if (cfg.kind === 'nightmare') {
       const t = Core.nightmareSpec(cfg.stage);
       return t.boss ? { boss: t.boss, mods: t.mods } : { enemies: t.enemies, mods: t.mods };
@@ -273,7 +302,7 @@
     let team = st.team.filter(id => st.owned[id]).slice(0, 3);
     const foes = enemySpecs(cfg);
     const foeEls = foes.boss ? [SP.BOSS[foes.boss.id].el] : foes.enemies.map(e => SP.STICKER[e.id].el);
-    const title = cfg.kind === 'nightmare' ? '😈 Pesadelo ' + cfg.stage : cfg.kind === 'stage' ? 'Fase ' + cfg.stage : cfg.kind === 'boss' ? SP.BOSS[cfg.bossId].name + ' (nível ' + cfg.tier + ')' : cfg.kind === 'tower' ? 'Torre Infinita — andar ' + cfg.floor : 'Batalha Rápida';
+    const title = cfg.kind === 'raid' ? '🌍 Chefe Mundial' : cfg.kind === 'nightmare' ? '😈 Pesadelo ' + cfg.stage : cfg.kind === 'stage' ? 'Fase ' + cfg.stage : cfg.kind === 'boss' ? SP.BOSS[cfg.bossId].name + ' (nível ' + cfg.tier + ')' : cfg.kind === 'tower' ? 'Torre Infinita — andar ' + cfg.floor : 'Batalha Rápida';
     el.innerHTML = `<div class="wrap">
       <div class="panel" style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><b>Adversário: ${UI.esc(title)}</b>
         <span class="small-txt muted">Elementos inimigos: ${foeEls.map(e => Art.elementIcon(e, 16)).join(' ')}</span></div>
@@ -295,7 +324,9 @@
     const draw = () => {
       UI.$('#slots', el).innerHTML = [0, 1, 2].map(i => team[i] ? UI.card(team[i], { showCount: false }) : `<div class="team-slot">Vaga ${i + 1}<br>vazia</div>`).join('');
       UI.$('#pick', el).innerHTML = owned.map(id => `<div style="position:relative;width:100%;display:flex;flex-direction:column;align-items:center">${UI.card(id, { cls: team.indexOf(id) >= 0 ? 'picked' : '', showCount: false })}<div class="small-txt">Poder ${Core.ownedPower(id)} ${adv(id)}</div></div>`).join('');
-      UI.$('#teamPow', el).innerHTML = 'Poder da equipe: <b>' + team.reduce((a, id) => a + Core.ownedPower(id), 0) + '</b>';
+      const syn = Battle.synergyOf(team.map(id => SP.STICKER[id].el));
+      UI.$('#teamPow', el).innerHTML = 'Poder da equipe: <b>' + team.reduce((a, id) => a + Core.ownedPower(id), 0) + '</b>'
+        + (syn ? ` · <span class="syn-tag">${Art.elementIcon(syn.el, 14)} Sinergia ${UI.elName(syn.el)} ×${syn.n}: +${syn.atk * 100}% ataque${syn.hp ? ', +' + syn.hp * 100 + '% vida' : ''}</span>` : ' · <span class="muted">2+ do mesmo elemento = sinergia</span>');
       UI.$('#fight', el).disabled = !team.length;
     };
     draw();
@@ -341,6 +372,8 @@
       : cfg.team.filter(id => SP.state.owned[id]).map(id => ({ id, level: SP.state.owned[id].level, stars: SP.state.owned[id].stars }));
     const b = Battle.create(Object.assign({ players }, foes));
     if (b.vanBond) setTimeout(() => UI.toast('📻 A Van ligou o rádio: o V começa com energia cheia!', 'gold'), 600);
+    if (b.synergy.player) setTimeout(() => UI.toast(`🤝 Sinergia ${UI.elName(b.synergy.player.el)} ×${b.synergy.player.n}: +${b.synergy.player.atk * 100}% de ataque`, 'good'), 300);
+    BT.vRevived = false;
     const token = {};
     Object.assign(BT, { active: true, b, cfg, el, token, waiting: null });
     const region = cfg.kind === 'stage' || cfg.kind === 'nightmare' ? SP.stageInfo(cfg.stage).region : SP.REGIONS[((cfg.tier || 1) + (cfg.floor || 0)) % SP.REGIONS.length];
@@ -351,6 +384,7 @@
         <span class="round-badge" id="rnd">Rodada 1</span>
         ${foes.mods ? `<span class="round-badge mods-badge" title="${foes.mods.map(id => SP.MODIFIER[id].name + ': ' + SP.MODIFIER[id].desc).join(' | ')}">${foes.mods.map(id => SP.MODIFIER[id].icon).join('')}</span>` : ''}
         ${cfg.kind === 'duel' ? '<span class="round-badge" style="color:#ff4b6b">J2 ↑</span>' : ''}
+        ${cfg.kind === 'raid' ? '<span class="round-badge raid-dmg" id="raidDmg">💥 0</span>' : ''}
         <div class="timeline" id="tl"></div>
         <button class="icon-btn speed-btn" id="spd" title="Velocidade">${SP.state.settings.battleSpeed}×</button>
         <button class="icon-btn speed-btn ${SP.state.settings.autoBattle ? 'on' : ''}" id="auto" title="Batalha automática">AUTO</button>
@@ -434,7 +468,9 @@
       const u = Battle.unit(b, id);
       return `<div class="tl-item ${u.side} ${k === 0 ? 'current' : ''}" title="${UI.esc(u.name)}">${u.isBoss ? Art.boss(u.id) : Art.sticker(u.id)}</div>`;
     }).join('');
-    UI.$('#rnd', BT.el).textContent = 'Rodada ' + Math.max(1, b.round);
+    UI.$('#rnd', BT.el).textContent = 'Rodada ' + Math.max(1, b.round) + (b.maxRounds ? '/' + b.maxRounds : '');
+    const rd = UI.$('#raidDmg', BT.el);
+    if (rd) { const bo = b.units.find(u => u.isBoss); rd.textContent = '💥 ' + UI.fmt(bo.maxHp - bo.hp); }
   }
   const spd = () => SP.state.settings.battleSpeed || 1;
   const wait = ms => UI.sleep(ms / spd());
@@ -521,6 +557,13 @@
       const cfg = BT.cfg;
       BT.token = null; BT.active = false;
       if (BT.waiting) BT.waiting = null;
+      if (cfg.kind === 'raid') {
+        // no Chefe Mundial, desistir encerra a tentativa com o dano causado até aqui
+        const bo = BT.b.units.find(u => u.isBoss);
+        Core.applyRaid(bo.maxHp - bo.hp, cfg.team);
+        UI.changed(); SP.FX.clear(); UI.back();
+        return;
+      }
       Core.applyBattleResult({ kind: cfg.kind, stage: cfg.stage, bossId: cfg.bossId, tier: cfg.tier, floor: cfg.floor, team: cfg.team, win: false, fled: true, skillsUsed: BT.b.stats.skillsUsed, advantageHits: BT.b.stats.advantageHits });
       UI.changed();
       SP.FX.clear();
@@ -559,6 +602,7 @@
           break;
         case 'action': {
           const actor = Battle.unit(b, e.u);
+          BT.lastActor = actor;
           const an = uel(e.u);
           if (an) { an.classList.remove('lunge-up', 'lunge-down'); void an.offsetWidth; an.classList.add(actor.side === 'player' ? 'lunge-up' : 'lunge-down'); }
           log((actor.side === 'enemy' ? '🔴 ' : '🔵 ') + actor.name + ' usou ' + e.name + (e.targets.length === 1 && e.targets[0] !== e.u ? ' em ' + Battle.unit(b, e.targets[0]).name : ''));
@@ -589,6 +633,7 @@
         }
         case 'damage': {
           if (!node) break;
+          if (BT.cfg.kind === 'raid') { const rd = UI.$('#raidDmg', BT.el); if (rd) { const bo = b.units.find(x => x.isBoss); rd.textContent = '💥 ' + UI.fmt(bo.maxHp - bo.hp); } }
           node.classList.remove('hit'); void node.offsetWidth; node.classList.add('hit');
           const cls = e.crit ? 'crit' : e.mult > 1 ? 'strong' : e.mult < 1 ? 'weak' : '';
           const txt = '-' + e.amount + (e.crit ? '!' : '');
@@ -657,6 +702,7 @@
           await wait(450);
           break;
         case 'revive':
+          if (BT.lastActor && BT.lastActor.id === 'v' && BT.lastActor.side === 'player') BT.vRevived = true;
           drawUnit(u, e.hp);
           SP.FX.at(node, { style: 'light', count: 40, speed: 260 });
           SP.FX.float(node, 'Reviveu!', 'heal');
@@ -684,6 +730,12 @@
     BT.active = false;
     const win = b.winner === 'player';
     if (cfg.kind === 'duel') return finishDuel(win);
+    if (cfg.kind === 'raid') return finishRaid();
+    // segredo: o V trouxe alguém de volta → o Téo também volta
+    if (BT.vRevived && !SP.state.owned.teo) {
+      const r = Core.unlockTeo();
+      if (r.ok) setTimeout(() => UI.revealSecret('teo'), 1800);
+    }
     // guarda o XP antes, para animar as barras
     const before = {};
     (cfg.team || []).forEach(id => { const o = SP.state.owned[id]; if (o) before[id] = { level: o.level, xp: o.xp, stars: o.stars }; });
@@ -771,6 +823,26 @@
       bar.style.width = xpPct(now) + '%';
       if (now.level >= SP.PROG.levelCap(now.stars)) row.querySelector('.xp-gain').textContent = 'Nível máximo';
     }
+  }
+
+  function finishRaid() {
+    const b = BT.b, cfg = BT.cfg;
+    const bo = b.units.find(u => u.isBoss);
+    const dmg = bo.maxHp - bo.hp;
+    const r = Core.applyRaid(dmg, cfg.team);
+    UI.changed();
+    UI.sfx('victory');
+    SP.FX.burst(innerWidth / 2, innerHeight * 0.3, { style: 'confetti', count: 100, speed: 480, life: 1.5 });
+    const T = SP.RAID.tiers;
+    const m = UI.modal(`<div class="result">
+      <div class="r-title win">💥 ${UI.fmt(dmg)}</div>
+      <p><b>de dano no Chefe Mundial</b>${r.record ? ' · <span style="color:#ffe14d">NOVO RECORDE DA SEMANA!</span>' : ''}</p>
+      <div class="raid-tiers result-tiers">${T.map((t, i) => `<div class="raid-tier ${dmg >= t.dmg ? 'done' : ''} ${i === r.tier ? 'hit' : ''}"><b>${UI.fmt(t.dmg)}</b><span>${Core.rewardText(t.reward)}</span></div>`).join('')}</div>
+      <p class="muted">Recompensa: ${r.ok ? Core.rewardText(r.reward) + ' · +' + r.xp + ' XP para a equipe' : UI.esc(r.reason || '')}</p>
+      <p class="small-txt muted">Tentativas restantes hoje: ${Core.raidAttemptsLeft()}</p>
+      <div class="row center" style="margin-top:12px"><button class="btn red" id="rAgain" ${Core.raidAttemptsLeft() ? '' : 'disabled'}>Tentar de novo</button><button class="btn ghost" id="rOut">Voltar</button></div></div>`, { sticky: true, onClose: () => SP.FX.clear() });
+    UI.$('#rAgain', m).addEventListener('click', () => { m.close(); UI.go('team', { kind: 'raid' }, { replace: true }); });
+    UI.$('#rOut', m).addEventListener('click', () => { m.close(); UI.go('battles', { tab: 'raid' }, { replace: true }); });
   }
 
   function finishDuel(p1win) {

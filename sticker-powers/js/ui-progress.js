@@ -13,11 +13,13 @@
       <div class="tabs">
         <button class="tab ${tab === 'evolve' ? 'on' : ''}" data-t="evolve">⬆ Treinar e Evoluir</button>
         <button class="tab ${tab === 'forge' ? 'on' : ''}" data-t="forge">⚒ Forja</button>
+        <button class="tab ${tab === 'fusion' ? 'on' : ''}" data-t="fusion">🧬 Fusão</button>
         <button class="tab ${tab === 'frames' ? 'on' : ''}" data-t="frames">🖼 Molduras</button>
       </div><div id="upBody"></div></div>`;
     UI.$$('.tab', el).forEach(t => t.addEventListener('click', () => { UI.sfx('click'); UI.currentParams = { tab: t.dataset.t }; UI.render('upgrades', { tab: t.dataset.t }); }));
     if (tab === 'forge') forge(UI.$('#upBody', el));
     else if (tab === 'frames') frames(UI.$('#upBody', el));
+    else if (tab === 'fusion') fusion(UI.$('#upBody', el));
     else evolveTab(UI.$('#upBody', el), params.id);
   };
 
@@ -59,7 +61,7 @@
           </div>
           <div class="panel" style="background:rgba(0,0,0,.25);margin-top:10px">
             <b>✨ Evoluir</b> ${evo.maxed ? '<span class="badge" style="background:#ffc21a;color:#000">EVOLUÇÃO MÁXIMA</span>' : `<span class="small-txt muted">→ ${o.stars + 1} estrelas</span>`}
-            ${evo.maxed ? '<div class="small-txt muted" style="margin-top:6px">Este sticker transcendeu: talento elemental ativo, nível 60 e habilidade com +75% de poder.</div>' : `
+            ${evo.maxed ? '<div class="small-txt muted" style="margin-top:6px">Este sticker é Divino: talento elemental ativo, nível 70 e habilidade com +100% de poder.</div>' : `
             <div class="cost-line small-txt">
               <span class="${evo.levelOk ? 'ok' : 'no'}">${evo.levelOk ? '✓' : '✗'} Nível ${evo.needLevel}</span>
               <span class="${evo.coinsOk ? 'ok' : 'no'}">${evo.coinsOk ? '✓' : '✗'} ${Art.icon('coin', 14)} ${evo.coins}</span>
@@ -174,6 +176,69 @@
     UI.$$('.forge-item .card', body).forEach(c => c.addEventListener('click', () => UI.showDetail(c.dataset.id)));
   }
 
+  /* ---------------------------------------------------------------- FUSÃO */
+  function fusion(body) {
+    const st = SP.state, C = SP.FUSION_COST;
+    const mini = (id, ok, stars) => `<div class="fz-parent ${ok ? 'ok' : ''}">${UI.card(id, { cls: 'xs', showCount: false })}<div class="small-txt ${ok ? '' : 'muted'}">${st.owned[id] ? (stars >= SP.FUSION_MIN_STARS ? '✓ ' : '✗ ') + stars + '★' : '✗ não tem'}</div></div>`;
+    const draw = () => {
+      const done = SP.FUSIONS.filter(f => st.owned[f.id]).length;
+      body.innerHTML = `<div class="panel fz-head"><b>🧬 Laboratório de Fusão</b>
+        <p class="small-txt muted" style="margin:6px 0 0">Dois stickers com <b>${SP.FUSION_MIN_STARS}★ ou mais</b> se fundem num sticker Secreto novo, com habilidade própria. Os dois originais <b>continuam com você</b>. Custo de cada fusão: ${Art.icon('coin', 14)} ${UI.fmt(C.coins)} · ${Art.icon('frag', 14)} ${C.fragments} · ${Art.icon('essence', 14)} ${C.essence}.</p>
+        <p class="small-txt" style="margin:6px 0 0">Fusões feitas: <b>${done}/${SP.FUSIONS.filter(f => !f.secretRecipe).length}</b>${SP.state.owned.fx_estrada ? ' + 1 secreta' : ''}</p></div>
+        <div class="fz-list">${SP.FUSIONS.map(f => {
+          if (!Core.fusionKnown(f)) {
+            return `<div class="panel fz-item secret"><div class="fz-row"><div class="fz-parent"><div class="team-slot fz-q">?</div></div><span class="fz-plus">+</span><div class="fz-parent"><div class="team-slot fz-q">?</div></div><span class="fz-eq">=</span>${UI.card(f.id, { cls: 'sm', locked: true })}</div>
+              <div class="small-txt muted" style="text-align:center">🔒 Receita secreta: <i>“Dois que sempre tiveram para onde ir juntos.”</i></div></div>`;
+          }
+          const i = Core.fusionInfo(f.id);
+          return `<div class="panel fz-item ${i.owned ? 'owned' : ''}"><div class="fz-row">${mini(f.a, i.hasA && i.starsA >= SP.FUSION_MIN_STARS, i.starsA)}<span class="fz-plus">+</span>${mini(f.b, i.hasB && i.starsB >= SP.FUSION_MIN_STARS, i.starsB)}<span class="fz-eq">=</span>${UI.card(f.id, { cls: 'sm', locked: !i.owned })}</div>
+            <div style="text-align:center"><b>${i.owned ? UI.esc(f.name) : '???'}</b><div class="small-txt muted">${i.owned ? UI.esc(f.title) : 'Una os dois para descobrir.'}</div>
+            ${i.owned ? '<span class="tag good">✓ Fundido</span>' : `<button class="btn small ${i.ok ? 'gold' : ''}" data-fuse="${f.id}" ${i.ok ? '' : 'disabled'}>🧬 Fundir</button>`}</div></div>`;
+        }).join('')}</div>`;
+      UI.$$('[data-fuse]', body).forEach(b => b.addEventListener('click', () => {
+        const fid = b.dataset.fuse;
+        const r = Core.fuse(fid);
+        if (!r.ok) { UI.sfx('error'); UI.toast(r.reason, 'bad'); return; }
+        UI.changed();
+        fusionAnimation(fid, draw);
+      }));
+      UI.$$('.fz-item .card:not(.locked)', body).forEach(c => c.addEventListener('click', () => UI.showDetail(c.dataset.id)));
+    };
+    draw();
+  }
+
+  function fusionAnimation(fid, done) {
+    const f = SP.STICKER[fid];
+    const ov = document.createElement('div');
+    ov.className = 'fusion-anim';
+    ov.innerHTML = `<div class="fa-a">${UI.card(f.a, { cls: 'sm', showCount: false })}</div><div class="fa-b">${UI.card(f.b, { cls: 'sm', showCount: false })}</div><div class="fa-core"></div>`;
+    document.body.appendChild(ov);
+    UI.sfx('evolve');
+    const fast = SP.state.settings.reducedMotion;
+    setTimeout(() => {
+      SP.FX.flash('#ffffff', 700);
+      SP.FX.at(UI.$('.fa-core', ov), { style: SP.STICKER[f.a].el, count: 70, speed: 460, size: 8 });
+      SP.FX.at(UI.$('.fa-core', ov), { style: SP.STICKER[f.b].el, count: 70, speed: 460, size: 8 });
+      // um novo ser nasce: primeiro só a silhueta, depois as cores
+      ov.classList.add('born');
+      ov.innerHTML = `<div class="fa-born"><div class="fa-sil">${Art.sticker(fid)}</div><div class="fa-txt">UM NOVO SER NASCEU</div></div>`;
+      UI.sfx('reveal', 5);
+      setTimeout(() => reveal(), fast ? 200 : 1800);
+    }, fast ? 300 : 1700);
+    function reveal() {
+      ov.remove();
+      UI.sfx('reveal', 6);
+      const m = UI.modal(`<div class="v-reveal"><div class="v-kicker">🧬 FUSÃO CONCLUÍDA</div>
+        <div class="row center">${UI.card(fid, { cls: 'lg', isNew: true, showCount: false })}</div>
+        <h3 style="margin-top:10px">${UI.esc(f.name)}</h3><p class="story">${UI.esc(f.story)}</p>
+        ${f.quote ? `<blockquote class="v-quote">“${UI.esc(f.quote)}”<span>— V</span></blockquote>` : ''}
+        <div class="row center"><button class="btn gold" id="fzSee">Ver ficha</button></div></div>`, { cls: 'narrow', onClose: done });
+      const c = UI.$('.card', m); UI.tilt(c);
+      setTimeout(() => SP.FX.rarityBurst(c, 'secret'), 200);
+      UI.$('#fzSee', m).addEventListener('click', () => { m.close(); UI.showDetail(fid); });
+    }
+  }
+
   /* ---------------------------------------------------------------- MOLDURAS */
   function frames(body) {
     const st = SP.state;
@@ -270,7 +335,7 @@
         <h2 class="section">Recordes</h2>
         <div class="stats-grid">
           ${[['Vitórias', S.battlesWon], ['Derrotas', S.battlesLost], ['Melhor sequência', S.bestStreak], ['Pacotes abertos', S.packsOpened], ['Stickers recebidos', S.stickersObtained],
-            ['Coleção', Core.uniqueOwned() + '/' + SP.STICKERS.length], ['Fases vencidas', st.campaign.cleared + '/' + SP.STAGE_COUNT], ['Chefes derrotados', Core.missionValue('bossKinds') + '/' + SP.BOSSES.length], ['Recorde da Torre', 'Andar ' + st.tower.best], ['Pesadelos vencidos', st.nightmare.cleared + '/' + SP.ACT2_END], ['Duelos jogados', S.duels],
+            ['Coleção', Core.uniqueOwned() + '/' + SP.STICKERS.length], ['Fases vencidas', st.campaign.cleared + '/' + SP.STAGE_COUNT], ['Chefes derrotados', Core.missionValue('bossKinds') + '/' + SP.BOSSES.length], ['Recorde da Torre', 'Andar ' + st.tower.best], ['Pesadelos vencidos', st.nightmare.cleared + '/' + SP.ACT2_END], ['Fusões', Core.missionValue('fusions') + '/' + SP.FUSIONS.length], ['Recorde Chefe Mundial', UI.fmt(st.raid.best)], ['Duelos jogados', S.duels],
             ['Evoluções', S.evolutions], ['Habilidades usadas', S.skillsUsed], ['Golpes com vantagem', S.advantageHits], ['Moedas ganhas', UI.fmt(S.totalCoinsEarned)]]
             .map(([l, v]) => `<div class="panel"><b>${v}</b><span class="small-txt muted">${l}</span></div>`).join('')}
         </div>

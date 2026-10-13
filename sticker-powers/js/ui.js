@@ -185,11 +185,11 @@
     const locked = o.locked != null ? o.locked : !own;
     const stars = own ? own.stars : 1;
     const E = SP.ELEMENT[s.el];
-    const cls = ['card', 'r-' + s.rarity, 'el-' + s.el, locked ? 'locked' : '', !locked && stars >= 2 ? 's2' : '', !locked && stars >= 3 ? 's3' : '', !locked && stars >= 4 ? 's4' : '', !locked && stars >= 5 ? 's5' : '', !locked && stars >= 6 ? 's6' : '', !locked && own ? 'f-' + SP.Core.frameOf(id) : '', o.cls || ''].join(' ');
+    const cls = ['card', 'r-' + s.rarity, 'el-' + s.el, locked ? 'locked' : '', !locked && stars >= 2 ? 's2' : '', !locked && stars >= 3 ? 's3' : '', !locked && stars >= 4 ? 's4' : '', !locked && stars >= 5 ? 's5' : '', !locked && stars >= 6 ? 's6' : '', !locked && stars >= 7 ? 's7' : '', s.fusion ? 'fusion' : '', !locked && own ? 'f-' + SP.Core.frameOf(id) : '', o.cls || ''].join(' ');
     return `<div class="${cls}" data-id="${id}" style="--elc:${E.c1}" role="button" tabindex="0" aria-label="${locked ? 'Sticker desconhecido' : UI.esc(s.name)}">
       <div class="frame">
         <div class="art-box">${Art.sticker(id)}</div>
-        <div class="c-top"><span class="c-num">#${s.hidden ? 'V' : String(s.num).padStart(2, '0')}</span><span class="c-el">${Art.elementIcon(s.el, 14)}</span></div>
+        <div class="c-top"><span class="c-num">#${s.fusion ? '🧬' : s.hidden ? 'V' : String(s.num).padStart(2, '0')}</span><span class="c-el">${Art.elementIcon(s.el, 14)}${s.fusion ? Art.elementIcon(SP.STICKER[s.b].el, 14) : ''}</span></div>
         ${!locked && o.showCount !== false && own && own.count > 1 ? `<span class="c-count">×${own.count}</span>` : ''}
         ${!locked && own && own.fav ? `<span class="c-fav">${Art.icon('heart', 14)}</span>` : ''}
         ${o.isNew ? '<span class="c-new">NOVO!</span>' : ''}
@@ -233,14 +233,15 @@
       </div>
       <div class="showcase">${show.map(id => UI.card(id, { cls: 'sm', showCount: false })).join('')}</div>
       <div class="menu-grid">
-        <button class="menu-tile play" data-go="play">${Art.icon('play')}<span>JOGAR <small style="display:block">${st.campaign.cleared >= SP.STAGE_COUNT ? (st.nightmare.cleared < SP.ACT2_END ? '😈 Modo Pesadelo — fase ' + (st.nightmare.cleared + 1) : 'Tudo zerado! Suba a Torre Infinita') : (next > SP.ACT2_END ? 'Ato III · ' : next > SP.ACT1_END ? 'Ato II · ' : '') + 'Fase ' + next + ' — ' + SP.stageInfo(next).region.name}</small></span></button>
+        <button class="menu-tile play" data-go="play">${Art.icon('play')}<span>JOGAR <small style="display:block">${st.campaign.cleared >= SP.STAGE_COUNT ? (st.nightmare.cleared < SP.ACT2_END ? '😈 Modo Pesadelo — fase ' + (st.nightmare.cleared + 1) : 'Tudo zerado! Suba a Torre Infinita') : (next > SP.ACT3_END ? 'Ato IV · ' : next > SP.ACT2_END ? 'Ato III · ' : next > SP.ACT1_END ? 'Ato II · ' : '') + 'Fase ' + next + ' — ' + SP.stageInfo(next).region.name}</small></span></button>
         <button class="menu-tile t-album" data-go="collection">${Art.icon('album')}Coleção<small>${Core.uniqueOwned()}/${SP.STICKERS.length}</small></button>
         <button class="menu-tile t-pack" data-go="packs">${Art.icon('pack')}Abrir Pacotes<small>${free ? 'Pacote grátis disponível!' : tokens ? tokens + ' pacote(s) guardado(s)' : '&nbsp;'}</small>${free || tokens ? '<span class="notif-dot">!</span>' : ''}</button>
-        <button class="menu-tile t-battle" data-go="battles">${Art.icon('swords')}Batalhas<small>Campanha · Pesadelo · Torre · Duelo</small></button>
-        <button class="menu-tile t-up" data-go="upgrades">${Art.icon('up')}Melhorias<small>Treinar · Evoluir · Forja</small></button>
+        <button class="menu-tile t-battle" data-go="battles">${Art.icon('swords')}Batalhas<small>Campanha · Chefe Mundial · Pesadelo · Torre</small></button>
+        <button class="menu-tile t-up" data-go="upgrades">${Art.icon('up')}Melhorias<small>Treinar · Evoluir · Fusão</small></button>
         <button class="menu-tile t-mission" data-go="missions">${Art.icon('scroll')}Missões<small>Diárias e conquistas</small>${claim ? `<span class="notif-dot">${claim}</span>` : ''}</button>
         <button class="menu-tile t-settings" data-go="settings">${Art.icon('gear')}Configurações<small>Som · Animações · Save</small></button>
       </div>
+      ${st.owned.v && !st.owned.gustavo && Core.isThursday() ? `<button class="pizza-box" id="pizzaBox" aria-label="Uma caixa de pizza">🍕</button>` : ''}
       <button class="v-glass ${st.owned.v ? 'found' : ''}" id="vGlass" aria-label="Um copo de requeijão" title="">${UI.glassSVG()}</button>
       <div class="home-stats">
         <span>Coleção <b>${Math.round(Core.completion() * 100)}%</b></span>
@@ -260,6 +261,15 @@
       } else UI.go(g);
     }));
     UI.$('#vGlass', el).addEventListener('click', e => UI.touchGlass(e.currentTarget));
+    const pz = UI.$('#pizzaBox', el);
+    if (pz) pz.addEventListener('click', () => {
+      UI.sfx('click');
+      UI.toast('<i>— Cara, você sumiu.</i><br><span class="small-txt">Alguém chegou com uma sacola de mercado. É quinta-feira.</span>');
+      const r = Core.unlockGustavo();
+      if (!r.ok) return;
+      pz.remove(); UI.changed();
+      setTimeout(() => UI.revealSecret('gustavo'), 900);
+    });
     if (!st.seenIntro) UI.showIntro();
   };
 
@@ -309,8 +319,8 @@
       <div class="v-kicker">STICKER SECRETO DESCOBERTO</div>
       <div class="row center">${UI.card(sid, { cls: 'lg', isNew: true, showCount: false })}</div>
       <blockquote class="v-quote">“${UI.esc(s.quote)}”<span>— ${UI.esc(s.quoteBy || 'V')}</span></blockquote>
-      <p class="small-txt muted">${sid === 'van' ? 'Ela não está no álbum e nunca vai falar. Mas, com o V na mesma equipe, liga o rádio e ele começa a luta com energia cheia.' : 'Ele não está no álbum, não sai em pacotes e não pode ser forjado. Só quem fez o copo parar o encontra.'}</p>
-      <div class="row center"><button class="btn gold" id="vSee">${sid === 'van' ? 'Ver a Van' : 'Ver o V'}</button></div></div>`, { cls: 'narrow' });
+      <p class="small-txt muted">${({ van: 'Ela não está no álbum e nunca vai falar. Mas, com o V na mesma equipe, liga o rádio e ele começa a luta com energia cheia.', gustavo: 'Toda quinta-feira ele aparece. Desta vez, ficou.', teo: 'O V trouxe alguém de volta numa batalha, e o Téo voltou junto. Confuso, de terno, vivo.' })[sid] || 'Ele não está no álbum, não sai em pacotes e não pode ser forjado. Só quem fez o copo parar o encontra.'}</p>
+      <div class="row center"><button class="btn gold" id="vSee">Ver ${UI.esc(s.name)}</button></div></div>`, { cls: 'narrow' });
     const c = UI.$('.card', m);
     UI.tilt(c);
     setTimeout(() => { SP.FX.rarityBurst(c, 'secret'); SP.FX.at(c, { style: 'time', count: 60, speed: 300 }); }, 250);
@@ -366,7 +376,7 @@
     const grid = UI.$('#grid', el);
     const draw = () => {
       // o sticker secreto só entra na lista depois de encontrado
-      let list = SP.STICKERS.concat(SP.SECRET_STICKERS.filter(x => st.owned[x.id]));
+      let list = SP.STICKERS.concat(SP.SECRET_STICKERS.filter(x => st.owned[x.id]), SP.FUSIONS.filter(x => st.owned[x.id]));
       const q = CF.q.trim().toLowerCase();
       if (q) list = list.filter(s => st.owned[s.id] && s.name.toLowerCase().indexOf(q) >= 0);
       if (CF.rarity !== 'all') list = list.filter(s => s.rarity === CF.rarity);
@@ -457,7 +467,7 @@
     const s = SP.STICKER[id];
     const tgt = { enemy: 'Um inimigo', allEnemies: 'Todos os inimigos', ally: 'Um aliado', allAllies: 'Toda a equipe', self: 'Si mesmo' }[sk.target];
     return `<div class="skill-box"><div class="sk-name"><span>✦ ${UI.esc(sk.name)}</span><span class="badge">${sk.cost} energia</span></div>
-      <div class="small-txt" style="margin-top:4px">${UI.esc(s.skill.desc)}${sk.transcend ? ' <b style="color:#9cf5ff">(Transcendente: +75% de poder, custo −1)</b>' : sk.supreme ? ' <b style="color:#ff9cf0">(Forma Suprema: +50% de poder, custo −1)</b>' : sk.awakened ? ' <b style="color:#ffe14d">(Desperta: +25% de poder, custo −1)</b>' : ''}</div>
+      <div class="small-txt" style="margin-top:4px">${UI.esc(s.skill.desc)}${sk.divine ? ' <b style="color:#ffe14d">(Divino: +100% de poder, custo −1)</b>' : sk.transcend ? ' <b style="color:#9cf5ff">(Transcendente: +75% de poder, custo −1)</b>' : sk.supreme ? ' <b style="color:#ff9cf0">(Forma Suprema: +50% de poder, custo −1)</b>' : sk.awakened ? ' <b style="color:#ffe14d">(Desperta: +25% de poder, custo −1)</b>' : ''}</div>
       <div class="small-txt muted" style="margin-top:4px">Alvo: ${tgt}</div></div>
       <div class="skill-box" style="${stars >= 2 ? '' : 'opacity:.55'}"><div class="sk-name" style="color:${SP.ELEMENT[s.el].c2}"><span>${Art.elementIcon(s.el, 14)} Talento: ${UI.elName(s.el)}</span><span class="badge">${stars >= 2 ? 'Ativo' : '🔒 Estrela 2'}</span></div>
       <div class="small-txt" style="margin-top:4px">${SP.ELEMENT[s.el].passive}</div></div>`;
