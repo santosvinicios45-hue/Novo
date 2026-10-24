@@ -96,8 +96,8 @@
       notes: 'Ficha inteira criada para o jogo. Pode ser reescrita quando o autor definir o personagem.',
     },
     stats: { speed: 4, power: 8, defense: 8, reach: 6, energy: 5 },
-    health: 1100,
-    physics: { walk: 2.1, back: 1.7, run: 5.0, backdash: 5.0, jumpV: -9.6, jumpH: 3.0, gravity: 0.58, width: 36, height: 104, crouchHeight: 70, throwRange: 56 },
+    health: 1150,
+    physics: { walk: 2.2, back: 1.7, run: 5.0, backdash: 5.0, jumpV: -9.6, jumpH: 3.0, gravity: 0.58, width: 36, height: 104, crouchHeight: 70, throwRange: 56 },
     look: {
       skin: '#9aa88a', hairStyle: 'ridges', ridge: '#d9d0b8', eye: '#20251a', brow: '#55604a',
       top: '#5a2e2a', sleeve: '#9aa88a', shirt: null, collar: '#3f1f1c', pants: '#3b3f2e', boots: '#2a241c', glove: '#b5c79a', belt: '#2a1a14',

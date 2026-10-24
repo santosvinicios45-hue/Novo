@@ -72,8 +72,9 @@ const Rig = VA.Rig = {
     const ex = look.extras || {};
     const ctxDraw = { ctx, J, f, s, look, mono, C, limb, dot, pose: o.pose, t: o.t || 0, state: o.state || {} };
 
-    if (ex.behind) ex.behind(ctxDraw);
+    if (ex.behind && !o.bust) ex.behind(ctxDraw);
     const dk = c => U.shade(c, -28);
+    if (!o.bust) {
     // braço de trás
     limb(J.SB, J.EB, b.armW * s, dk(look.sleeve || look.top));
     limb(J.EB, J.HB, b.armW * s * 0.92, dk(look.sleeve || look.top));
@@ -87,12 +88,14 @@ const Rig = VA.Rig = {
     limb(J.KF, J.FF, b.legW * s * 0.9, look.pants);
     this.boot(ctx, J.FF, J.KF, f, s, b, look.boots, mono);
     if (ex.legs) ex.legs(ctxDraw);
+    }
     // tronco
     this.torso(ctx, J, f, s, b, look, mono);
     if (ex.torso) ex.torso(ctxDraw);
     // cabeça
     this.head(ctx, J, f, s, look, mono, o);
     if (ex.head) ex.head(ctxDraw);
+    if (o.bust) { ctx.restore(); return J; }
     // braço da frente
     limb(J.SF, J.EF, b.armW * s, look.sleeve || look.top);
     limb(J.EF, J.HF, b.armW * s * 0.92, look.sleeve || look.top);
@@ -152,14 +155,15 @@ const Rig = VA.Rig = {
       // rosto (lado da frente)
       const fx = N[0] + f * r * 0.42, fy = N[1] - r * 0.08;
       if (look.stubble) { ctx.fillStyle = look.stubble; ctx.beginPath(); ctx.ellipse(N[0] + f * r * 0.42, N[1] + r * 0.62, r * 0.42, r * 0.22, 0, 0, Math.PI); ctx.fill(); }
-      ctx.fillStyle = U.shade(look.skin, 25); ctx.fillRect(N[0] + f * r * 0.86 - 1, N[1] + 1, 2.4, 2.4);  // nariz
+      const k = Math.max(1, r / 9);
+      ctx.fillStyle = U.shade(look.skin, 25); ctx.fillRect(N[0] + f * r * 0.86 - k, N[1] + k, 2.4 * k, 2.4 * k);  // nariz
       const glow = o.eyeGlow || look.eyeGlow;
       if (glow) {
         ctx.fillStyle = glow; ctx.shadowColor = glow; ctx.shadowBlur = 8;
-        ctx.fillRect(fx - 1.5, fy - 1, 4, 2.2); ctx.shadowBlur = 0;
+        ctx.fillRect(fx - 1.5 * k, fy - k, 4 * k, 2.2 * k); ctx.shadowBlur = 0;
       } else {
-        ctx.fillStyle = look.eye || '#1d1512'; ctx.fillRect(fx - 1, fy - 1, 2.2, 2.2);
-        if (look.brow) { ctx.fillStyle = look.brow; ctx.fillRect(fx - 2.5, fy - 3.6, 4.5, 1.4); }
+        ctx.fillStyle = look.eye || '#1d1512'; ctx.fillRect(fx - k, fy - k, 2.2 * k, 2.2 * k);
+        if (look.brow) { ctx.fillStyle = look.brow; ctx.fillRect(fx - 2.5 * k, fy - 3.6 * k, 4.5 * k, 1.4 * k); }
       }
       if (look.mark) look.mark(ctx, N, r, f);
     }
@@ -170,29 +174,37 @@ const Rig = VA.Rig = {
   HAIR: {
     // V: grisalho, bagunçado, mechas para trás e para cima
     messy: {
+      back(ctx, N, r, f, look, mono) {
+        ctx.fillStyle = mono || U.shade(look.hair, -22);
+        ctx.beginPath(); ctx.ellipse(N[0] - f * r * 0.3, N[1] - r * 0.15, r * 1.02, r * 0.98, 0, 0, 7); ctx.fill();
+      },
       front(ctx, N, r, f, look, mono) {
         const c = mono || look.hair, c2 = mono || look.hair2 || look.hair;
-        ctx.fillStyle = c; ctx.strokeStyle = OUT; ctx.lineWidth = 1.4;
+        const P = (ang, rad) => [N[0] + Math.cos(ang) * rad * f, N[1] + Math.sin(ang) * rad];
+        // calota: cobre o alto da cabeça até a linha do cabelo
+        ctx.fillStyle = c; ctx.strokeStyle = OUT; ctx.lineWidth = 1.3;
         ctx.beginPath();
-        ctx.moveTo(N[0] + f * r * 0.95, N[1] - r * 0.15);
-        ctx.lineTo(N[0] + f * r * 1.1, N[1] - r * 0.7);
-        ctx.lineTo(N[0] + f * r * 0.55, N[1] - r * 1.25);
-        ctx.lineTo(N[0] + f * r * 0.2, N[1] - r * 1.05);
-        ctx.lineTo(N[0] - f * r * 0.25, N[1] - r * 1.45);
-        ctx.lineTo(N[0] - f * r * 0.55, N[1] - r * 1.05);
-        ctx.lineTo(N[0] - f * r * 1.35, N[1] - r * 0.95);
-        ctx.lineTo(N[0] - f * r * 1.05, N[1] - r * 0.45);
-        ctx.lineTo(N[0] - f * r * 1.4, N[1] - r * 0.05);
-        ctx.lineTo(N[0] - f * r * 0.95, N[1] + r * 0.45);
-        ctx.lineTo(N[0] - f * r * 0.15, N[1] + r * 0.05);
-        ctx.lineTo(N[0] + f * r * 0.3, N[1] - r * 0.5);
-        ctx.closePath(); ctx.fill(); if (!mono) ctx.stroke();
-        if (!mono) {
-          ctx.strokeStyle = c2; ctx.lineWidth = 1.2; ctx.beginPath();
-          ctx.moveTo(N[0] - f * r * 0.8, N[1] - r * 0.6); ctx.lineTo(N[0] + f * r * 0.4, N[1] - r * 0.95);
-          ctx.moveTo(N[0] - f * r * 0.9, N[1] - r * 0.1); ctx.lineTo(N[0] - f * r * 0.1, N[1] - r * 0.6);
-          ctx.stroke();
+        ctx.moveTo(...P(U.deg(-8), r * 0.98));
+        for (let i = 0; i <= 9; i++) {
+          // mechas bagunçadas, varridas para trás
+          const a0 = U.deg(-20 - i * 17), len = r * (1.28 + ((i * 37) % 5) * 0.07);
+          ctx.lineTo(...P(a0 + 0.12, r * 0.98));
+          ctx.lineTo(...P(a0 - 0.18, len));
         }
+        ctx.lineTo(...P(U.deg(-200), r * 0.95));
+        ctx.lineTo(...P(U.deg(160), r * 0.9));
+        ctx.lineTo(...P(U.deg(-120), r * 0.55));
+        ctx.lineTo(...P(U.deg(-60), r * 0.62));
+        ctx.closePath(); ctx.fill(); if (!mono) ctx.stroke();
+        if (mono) return;
+        // franja caindo na testa e reflexos grisalhos
+        ctx.fillStyle = c;
+        ctx.beginPath(); ctx.moveTo(...P(U.deg(-70), r * 0.7)); ctx.lineTo(...P(U.deg(-18), r * 0.62)); ctx.lineTo(...P(U.deg(-40), r * 1.02)); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = c2; ctx.lineWidth = Math.max(1, r * 0.1);
+        ctx.beginPath();
+        ctx.moveTo(...P(U.deg(-150), r * 1.05)); ctx.lineTo(...P(U.deg(-60), r * 0.95));
+        ctx.moveTo(...P(U.deg(-170), r * 0.8)); ctx.lineTo(...P(U.deg(-100), r * 0.92));
+        ctx.stroke();
       },
     },
     // Rayan: capuz escuro (como na aparição do capítulo 6 do jogo de aventura)
@@ -241,7 +253,8 @@ const Rig = VA.Rig = {
         const n = 3 + (look.ridgeCount || 0);
         for (let i = 0; i < n; i++) {
           const a = U.deg(-100 - i * (70 / n)) , bx = N[0] + Math.cos(a) * r * 0.9 * f, by = N[1] + Math.sin(a) * r * 0.9;
-          ctx.beginPath(); ctx.moveTo(bx - 2.2, by + 1); ctx.lineTo(bx + Math.cos(a) * 6 * f, by + Math.sin(a) * 6 - 1); ctx.lineTo(bx + 2.2, by + 1); ctx.closePath(); ctx.fill(); if (!mono) ctx.stroke();
+          const q = r / 9;
+          ctx.beginPath(); ctx.moveTo(bx - 2.2 * q, by + q); ctx.lineTo(bx + Math.cos(a) * 6 * q * f, by + Math.sin(a) * 6 * q - q); ctx.lineTo(bx + 2.2 * q, by + q); ctx.closePath(); ctx.fill(); if (!mono) ctx.stroke();
         }
       },
     },
@@ -251,13 +264,13 @@ const Rig = VA.Rig = {
   // cabeça e ombros grandes, desenhados com o mesmo rig (para HUD/seleção)
   portrait(ctx, def, x, y, size, facing = 1, form) {
     const look = Rig.lookFor(def, form);
-    const build = Object.assign({}, Rig.BUILD, def.look.build, { scale: size / 12 / ((def.look.build && def.look.build.headR || 9) / 9), lean: 0 });
+    const build = Object.assign({}, Rig.BUILD, def.look.build, { scale: size / 15 / ((def.look.build && def.look.build.headR || 9) / 9), lean: 0 });
     const pose = Object.assign({}, VA.poses.portrait);
     ctx.save();
     ctx.beginPath(); ctx.rect(x - size, y - size, size * 2, size * 2); ctx.clip();
     const J = Rig.joints(pose, build, facing);
     // posiciona a cabeça um pouco acima do centro do quadro
-    Rig.draw(ctx, { x: x - J.N[0], y: y - size * 0.15 + Rig.lowest(J) - J.N[1], facing, pose, look, build });
+    Rig.draw(ctx, { x: x - J.N[0], y: y - size * 0.15 + Rig.lowest(J) - J.N[1], facing, pose, look, build, bust: true });
     ctx.restore();
   },
 
@@ -269,6 +282,19 @@ const Rig = VA.Rig = {
 };
 
 // ------------------------------------------------------------ sprites
+// Carrega uma folha de sprites para substituir o esqueleto de um personagem.
+// o: { src, fw, fh (tamanho do quadro), ox, oy (pés dentro do quadro), scale,
+//      anims: { idle: { row, frames, fps, loop }, walk: {...}, lp: {...}, ... } }
+// Se o arquivo falhar, o jogo avisa e continua com a arte provisória.
+VA.loadSpriteSheet = function (id, o) {
+  const img = new Image();
+  img.onload = () => { VA.sprites[id] = Object.assign({ img, scale: 1, ox: o.fw / 2, oy: o.fh }, o); };
+  img.onerror = () => {
+    console.warn('Folha de sprites não carregou:', o.src);
+    setTimeout(() => VA.toast && VA.toast('Não foi possível carregar os sprites de ' + id + ' (' + o.src + '). Usando a arte provisória.', '#ff8a8a'), 500);
+  };
+  img.src = o.src;
+};
 // Desenha uma folha de sprites no lugar do esqueleto, quando houver.
 VA.drawSprite = function (ctx, sp, f, anim, t) {
   const a = sp.anims[anim] || sp.anims.idle;

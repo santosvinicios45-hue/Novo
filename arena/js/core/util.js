@@ -91,6 +91,7 @@ VA.registerCharacter = function (def) {
   }
   VA.chars[d.id] = d;
   VA.charOrder.push(d.id);
+  if (d.sprite) VA.loadSpriteSheet(d.id, d.sprite);
   return d;
 };
 

@@ -5,6 +5,13 @@ Cobre o **Ato I completo e o início do Ato II (capítulos 1 a 11)**, do copo qu
 
 > "Eu prefiro carregar a culpa de ter feito, do que a culpa de não ter feito nada." — V
 
+## Novo: V — The Awakening Arena (jogo de luta)
+
+Na pasta [`arena/`](arena/) está um **jogo de luta 2D estilo MUGEN** do mesmo universo: V, Rayan/Eclipse,
+Trigg e Kolt (desbloqueável), modos Arcade, Versus local, Contra a máquina, Sobrevivência, Treinamento e
+Galeria, supremos cinematográficos, a transformação "Grande Demais", IA com três dificuldades e progresso salvo.
+Abra `arena/index.html` no navegador. Instruções completas em [`arena/README.md`](arena/README.md).
+
 ## Como jogar
 
 Abra o `index.html` num navegador (Chrome, Edge, Firefox ou Safari). Não precisa instalar nada.

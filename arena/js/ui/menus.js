@@ -162,9 +162,9 @@
       el.querySelectorAll('.slot').forEach(sl => {
         const i = +sl.dataset.i;
         sl.classList.toggle('p1', st.cur[0] === i);
-        sl.classList.toggle('p2', st.two && st.cur[1] === i);
-        sl.classList.toggle('lock1', st.locked[0] && st.cur[0] === i);
-        sl.classList.toggle('lock2', st.locked[1] && st.cur[1] === i);
+        sl.classList.toggle('p2', !!st.two && st.cur[1] === i);
+        sl.classList.toggle('lock1', !!st.locked[0] && st.cur[0] === i);
+        sl.classList.toggle('lock2', !!st.locked[1] && st.cur[1] === i);
       });
       for (let s = 0; s < 2; s++) {
         const box = el.querySelector(`.sel-side[data-side="${s}"] .sel-info`);
