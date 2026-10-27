@@ -1,0 +1,775 @@
+<title>Conferidor de E-mail</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: mesa de trabalho em duas colunas — e-mail à esquerda, painel de conferência fixo à direita; no celular empilha e ganha uma barra de status no rodapé. */
+:root {
+  --bg: #eef1f5;
+  --surface: #ffffff;
+  --ink: #17202b;
+  --muted: #586374;
+  --line: #d3dae3;
+  --accent: #2340a8;       /* azul de caneta */
+  --accent-soft: #e4e9fb;
+  --ok: #1b7a45;   --ok-soft: #e1f3e8;
+  --warn: #9a5c00; --warn-soft: #fbefd9;
+  --err: #b8262a;  --err-soft: #fbe3e3;
+  --var: #5b3fb0;  --var-soft: #ece6fb;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151b; --surface: #1a2029; --ink: #e5e9ef; --muted: #9aa5b4; --line: #2d3541;
+    --accent: #93a8ff; --accent-soft: #232c4a;
+    --ok: #55c785; --ok-soft: #173225; --warn: #f0aa48; --warn-soft: #3a2b12;
+    --err: #ff7a76; --err-soft: #3d1c1d; --var: #c1aefc; --var-soft: #2b2446;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151b; --surface: #1a2029; --ink: #e5e9ef; --muted: #9aa5b4; --line: #2d3541;
+  --accent: #93a8ff; --accent-soft: #232c4a;
+  --ok: #55c785; --ok-soft: #173225; --warn: #f0aa48; --warn-soft: #3a2b12;
+  --err: #ff7a76; --err-soft: #3d1c1d; --var: #c1aefc; --var-soft: #2b2446;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 96px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+header h1 {
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(1.7rem, 4vw, 2.3rem);
+  letter-spacing: -0.02em; margin: 0; text-wrap: balance;
+}
+header p { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; margin: 0; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hint { color: var(--muted); font-size: 0.87rem; margin: 0; }
+.hint code, .mono { font-family: var(--font-mono); font-size: 0.85em; }
+.hint code { background: var(--var-soft); color: var(--var); padding: 1px 5px; border-radius: 4px; }
+
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+input[type="text"], textarea, select {
+  width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px;
+}
+textarea { resize: vertical; }
+#corpo, #m-corpo { min-height: 260px; line-height: 1.55; }
+.addr { font-family: var(--font-mono); font-size: 0.88rem; }
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+.field.has-err input, .field.has-err textarea { border-color: var(--err); background: var(--err-soft); }
+.field.has-warn input, .field.has-warn textarea { border-color: var(--warn); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
+
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  font: inherit; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+  border-radius: 8px; padding: 8px 13px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink);
+}
+button:hover { border-color: var(--accent); color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+button.primary:hover { filter: brightness(1.1); color: var(--surface); }
+button.danger { color: var(--err); }
+button.danger.armed { background: var(--err); border-color: var(--err); color: var(--surface); }
+button.mini { padding: 2px 8px; font-size: 0.75rem; font-weight: 700; }
+.file-btn { position: relative; overflow: hidden; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--font-mono); font-size: 0.78rem; padding: 3px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
+
+.example {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  background: var(--var-soft); color: var(--var); border-radius: 8px; padding: 9px 12px; font-size: 0.9rem;
+}
+.example strong { font-weight: 700; }
+
+/* Painel */
+.panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+@media (max-width: 900px) { .panel { position: static; } }
+.verdict { display: flex; gap: 16px; align-items: center; }
+.stamp {
+  flex: none; width: 118px; height: 118px; border-radius: 50%;
+  border: 4px double currentColor; display: grid; place-items: center; text-align: center;
+  font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; line-height: 1.05;
+  letter-spacing: 0.04em; text-transform: uppercase; transform: rotate(-9deg); padding: 10px;
+}
+.stamp.s-ok { color: var(--ok); background: var(--ok-soft); }
+.stamp.s-warn { color: var(--warn); background: var(--warn-soft); }
+.stamp.s-err { color: var(--err); background: var(--err-soft); }
+.stamp.pop { animation: pop .35s ease-out; }
+@keyframes pop { from { transform: rotate(-9deg) scale(1.25); opacity: .4; } to { transform: rotate(-9deg) scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .stamp.pop { animation: none; } }
+.counts { display: flex; flex-direction: column; gap: 4px; font-variant-numeric: tabular-nums; }
+.counts .big { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; line-height: 1.25; text-wrap: balance; }
+.counts span.n { display: inline-flex; gap: 6px; align-items: center; font-size: 0.9rem; color: var(--muted); }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.err { background: var(--err); } .dot.warn { background: var(--warn); } .dot.ok { background: var(--ok); }
+
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.check {
+  display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start;
+  padding: 8px 10px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; border: 1px solid transparent;
+}
+.check:hover { border-color: var(--line); }
+.check .ic { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 0.75rem; color: var(--surface); margin-top: 1px; }
+.check.erro { background: var(--err-soft); } .check.erro .ic { background: var(--err); }
+.check.aviso { background: var(--warn-soft); } .check.aviso .ic { background: var(--warn); }
+.check.ok .ic { background: var(--ok); }
+.check.ok { padding-block: 4px; color: var(--muted); }
+.check .grp { display: block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.check .msg { min-width: 0; overflow-wrap: anywhere; }
+.check .msg b { font-family: var(--font-mono); font-weight: 600; font-size: 0.85em; }
+details.oks summary { cursor: pointer; color: var(--muted); font-size: 0.88rem; padding: 4px 2px; }
+details.oks[open] summary { margin-bottom: 6px; }
+
+.manual { display: flex; flex-direction: column; gap: 6px; }
+.manual label.item {
+  display: flex; gap: 10px; align-items: flex-start; text-transform: none; letter-spacing: 0;
+  font-size: 0.92rem; font-weight: 400; color: var(--ink); cursor: pointer;
+  padding: 7px 10px; border: 1px dashed var(--line); border-radius: 8px;
+}
+.manual input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--ok); flex: none; }
+.manual label.item.done { border-style: solid; color: var(--muted); text-decoration: line-through; }
+.sep { height: 1px; background: var(--line); }
+h3 { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin: 0; }
+
+/* Diferenças */
+.diff {
+  white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.95rem; line-height: 1.7;
+  background: var(--bg); border-radius: 8px; padding: 14px; max-height: 480px; overflow: auto;
+}
+.diff del { background: var(--err-soft); color: var(--err); text-decoration: line-through; border-radius: 3px; padding: 0 2px; }
+.diff ins { background: var(--ok-soft); color: var(--ok); text-decoration: none; border-radius: 3px; padding: 0 2px; }
+.diff del.var { background: var(--var-soft); color: var(--var); text-decoration: none; font-family: var(--font-mono); font-size: 0.85em; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.82rem; color: var(--muted); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+
+.editor { border: 2px solid var(--accent); }
+.empty { color: var(--muted); font-size: 0.9rem; }
+
+/* Barra do celular */
+.bar {
+  display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: var(--surface); border-top: 1px solid var(--line);
+  align-items: center; justify-content: space-between; gap: 10px; font-weight: 700;
+}
+.bar .pill { padding: 4px 10px; border-radius: 99px; font-size: 0.82rem; }
+.pill.s-ok { background: var(--ok-soft); color: var(--ok); }
+.pill.s-warn { background: var(--warn-soft); color: var(--warn); }
+.pill.s-err { background: var(--err-soft); color: var(--err); }
+@media (max-width: 900px) { .bar { display: flex; } }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; z-index: 30;
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Conferidor de E-mail</h1>
+    <p>Escreva ou cole o e-mail aqui antes de enviar. O painel confere destinatários, assunto, anexos, datas e partes esquecidas, e compara tudo com o seu modelo para ver se ficou igualzinho.</p>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+
+      <section class="card" aria-labelledby="t-modelo">
+        <div class="card-head">
+          <h2 id="t-modelo">Modelo de comparação</h2>
+        </div>
+        <div class="field">
+          <label for="modelo">Comparar com</label>
+          <select id="modelo"></select>
+        </div>
+        <div class="btns">
+          <button id="b-preencher" class="primary" type="button">Começar e-mail a partir do modelo</button>
+          <button id="b-editar" type="button">Editar modelo</button>
+          <button id="b-novo" type="button">Novo modelo</button>
+          <button id="b-salvar-atual" type="button">Criar modelo com este e-mail</button>
+        </div>
+        <p class="hint">Nos modelos, use <code>{chaves}</code> para as partes que mudam a cada envio, como <code>{data}</code> ou <code>{nome}</code>. Se uma chave continuar no e-mail, o conferidor avisa que você esqueceu de preencher.</p>
+      </section>
+
+      <section class="card editor" id="editor" hidden aria-labelledby="t-editor">
+        <div class="card-head">
+          <h2 id="t-editor">Editando modelo</h2>
+          <button id="m-fechar" type="button" class="mini">Fechar</button>
+        </div>
+        <div class="field"><label for="m-nome">Nome do modelo</label><input type="text" id="m-nome"></div>
+        <div class="row2">
+          <div class="field"><label for="m-para">Para (sempre)</label><input type="text" id="m-para" class="addr"></div>
+          <div class="field"><label for="m-cc">Cc (sempre)</label><input type="text" id="m-cc" class="addr"></div>
+        </div>
+        <div class="field"><label for="m-assunto">Assunto</label><input type="text" id="m-assunto"></div>
+        <div class="field"><label for="m-corpo">Texto</label><textarea id="m-corpo"></textarea></div>
+        <div class="field"><label for="m-anexos">Anexos esperados (um por linha)</label><textarea id="m-anexos" rows="3" class="addr"></textarea></div>
+        <div class="field"><label for="m-checklist">O que conferir na mão antes de enviar (um por linha)</label><textarea id="m-checklist" rows="4"></textarea></div>
+        <div class="btns">
+          <button id="m-salvar" class="primary" type="button">Salvar modelo</button>
+          <button id="m-excluir" class="danger" type="button">Excluir modelo</button>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="t-email">
+        <div class="card-head">
+          <h2 id="t-email">E-mail</h2>
+          <div class="btns">
+            <button id="b-copiar" type="button">Copiar tudo</button>
+            <button id="b-limpar" class="danger" type="button">Limpar</button>
+          </div>
+        </div>
+        <div class="example" id="aviso-exemplo" hidden>
+          <span><strong>Exemplo:</strong> este e-mail foi preenchido com erros de propósito para mostrar o que o conferidor encontra.</span>
+          <button id="b-limpar2" type="button" class="mini">Limpar e começar o meu</button>
+        </div>
+        <div class="field" data-f="para">
+          <div class="field-top"><label for="para">Para</label><button class="mini" type="button" data-copy="para">Copiar</button></div>
+          <input type="text" id="para" class="addr" placeholder="nome@empresa.com.br; outro@empresa.com.br" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="row2">
+          <div class="field" data-f="cc">
+            <div class="field-top"><label for="cc">Cc</label><button class="mini" type="button" data-copy="cc">Copiar</button></div>
+            <input type="text" id="cc" class="addr" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field" data-f="cco">
+            <div class="field-top"><label for="cco">Cco</label><button class="mini" type="button" data-copy="cco">Copiar</button></div>
+            <input type="text" id="cco" class="addr" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+        <div class="field" data-f="assunto">
+          <div class="field-top"><label for="assunto">Assunto</label><button class="mini" type="button" data-copy="assunto">Copiar</button></div>
+          <input type="text" id="assunto">
+        </div>
+        <div class="field" data-f="corpo">
+          <div class="field-top"><label for="corpo">Texto</label><button class="mini" type="button" data-copy="corpo">Copiar</button></div>
+          <textarea id="corpo"></textarea>
+        </div>
+        <div class="field" data-f="anexos">
+          <div class="field-top"><label for="anexos">Anexos (um por linha)</label>
+            <span class="btn file-btn"><button type="button" class="mini" tabindex="-1">Adicionar arquivos</button><input type="file" id="arquivos" multiple aria-label="Adicionar arquivos aos anexos"></span>
+          </div>
+          <textarea id="anexos" rows="3" class="addr" placeholder="Relatorio.xlsx" spellcheck="false"></textarea>
+          <div class="chips" id="chips"></div>
+          <p class="hint">Os arquivos não saem do seu computador. O conferidor só lê o nome para conferir se é o anexo certo.</p>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="t-diff">
+        <div class="card-head"><h2 id="t-diff">Diferenças em relação ao modelo</h2></div>
+        <div class="legend">
+          <span><i class="sw" style="background:var(--err-soft);border:1px solid var(--err)"></i>Saiu do modelo</span>
+          <span><i class="sw" style="background:var(--ok-soft);border:1px solid var(--ok)"></i>Você escreveu</span>
+          <span><i class="sw" style="background:var(--var-soft);border:1px solid var(--var)"></i>Parte variável preenchida</span>
+        </div>
+        <div class="diff" id="diff"></div>
+      </section>
+    </div>
+
+    <aside class="col panel" id="painel" aria-label="Conferência">
+      <section class="card">
+        <div class="verdict">
+          <div class="stamp" id="stamp">…</div>
+          <div class="counts">
+            <span class="big" id="v-texto"></span>
+            <span class="n"><i class="dot err"></i><span id="n-err">0</span> erros</span>
+            <span class="n"><i class="dot warn"></i><span id="n-warn">0</span> avisos</span>
+            <span class="n"><i class="dot ok"></i><span id="n-ok">0</span> conferidos</span>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <ul class="checks" id="problemas"></ul>
+        <details class="oks" id="oks-wrap"><summary id="oks-sum"></summary><ul class="checks" id="oks"></ul></details>
+      </section>
+      <section class="card">
+        <h3>Antes de clicar em enviar</h3>
+        <div class="manual" id="manual"></div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<div class="bar" id="bar"><span>Conferência</span><button type="button" id="bar-btn" class="pill"></button></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  const MODELOS_PADRAO = [
+    {
+      id: "relatorio",
+      nome: "Relatório semanal de vendas",
+      para: "carla.mendes@empresa.com.br",
+      cc: "gerencia@empresa.com.br; financeiro@empresa.com.br",
+      assunto: "Relatório semanal de vendas – semana {número}",
+      corpo: "Bom dia, Carla.\n\nSegue em anexo o relatório semanal de vendas da semana {número}, com os números fechados até {data}.\n\nOs principais destaques foram:\n- {destaque}\n\nQualquer dúvida, fico à disposição.\n\nAtenciosamente,\n{seu nome}",
+      anexos: "Relatorio_Vendas_Semana{número}.xlsx\nResumo_Semana{número}.pdf",
+      checklist: "Abri a planilha e ela é da semana certa\nOs números do resumo batem com a planilha\nConferi os nomes de quem está em cópia"
+    },
+    {
+      id: "reuniao",
+      nome: "Confirmação de reunião",
+      para: "{cliente}",
+      cc: "",
+      assunto: "Confirmação de reunião – {data}",
+      corpo: "Olá, {nome}.\n\nConfirmo nossa reunião na {dia da semana}, {data}, às {horário}, {local ou link}.\n\nSe precisar remarcar, é só me avisar.\n\nAbraço,\n{seu nome}",
+      anexos: "",
+      checklist: "O horário está certo no meu calendário\nO link da reunião abre"
+    }
+  ];
+  const EXEMPLO = {
+    modelo: "relatorio",
+    para: "carla.mendes@empresa.com.br",
+    cc: "financeiro@empresa.com.br; joao.silva@gmial.com",
+    cco: "",
+    assunto: "Relatório semanal de vendas – semana 43",
+    corpo: "Bom dia, Carla.\n\nSegue em anexo o relatório semanal de vendas da semana 43, com os números fechados até quinta-feira, 30/10.\n\nOs principais destaques foram:\n- {destaque}\n\nQualquer dúvida, fico à disposição.\n\nAtenciosamente,\nAna Souza",
+    anexos: "Relatorio_Vendas_Semana43.xlsx",
+    exemplo: true
+  };
+  const CHECKLIST_GERAL = "Li o e-mail inteiro uma última vez\nAbri os anexos e são os arquivos certos\nÉ a pessoa certa no Para";
+
+  let modelos = store.get("ce.modelos", null) || MODELOS_PADRAO.slice();
+  let rascunho = store.get("ce.rascunho", null) || EXEMPLO;
+  let marcados = {};
+  let editandoId = null;
+  const CAMPOS = ["para", "cc", "cco", "assunto", "corpo", "anexos"];
+
+  /* ---------- utilidades ---------- */
+  function parseAddrs(str) {
+    const out = [];
+    String(str || "").split(/[,;\n]+/).forEach((parte) => {
+      const p = parte.trim();
+      if (!p) return;
+      const m = p.match(/<([^>]*)>/);
+      if (m) { out.push({ raw: p, email: m[1].trim() }); return; }
+      p.split(/\s+/).forEach((t) => t && out.push({ raw: t, email: t }));
+    });
+    return out;
+  }
+  const EMAIL_RE = /^[^\s@<>(),;:"\[\]]+@[^\s@<>(),;:"\[\]]+\.[A-Za-z]{2,}$/;
+  const DOMINIOS_ERRADOS = {
+    "gmial.com": "gmail.com", "gmal.com": "gmail.com", "gmai.com": "gmail.com", "gamil.com": "gmail.com",
+    "gnail.com": "gmail.com", "gmail.co": "gmail.com", "gmail.con": "gmail.com", "gmail.cm": "gmail.com",
+    "hotmial.com": "hotmail.com", "hotmal.com": "hotmail.com", "hotmai.com": "hotmail.com", "hotmail.co": "hotmail.com",
+    "hotmail.con": "hotmail.com", "outlok.com": "outlook.com", "outloo.com": "outlook.com", "outlook.con": "outlook.com",
+    "yaho.com": "yahoo.com", "yahoo.com.b": "yahoo.com.br", "yahoo.con.br": "yahoo.com.br", "icloud.con": "icloud.com"
+  };
+  const FINAIS_ERRADOS = /\.(con|cmo|ocm|om|comm|vom|xom)(\.br)?$|\.com\.(bt|rb|b)$|\.br\.com$/i;
+  const norm = (s) => String(s || "").trim().toLowerCase();
+  const temChave = (s) => /\{[^}\n]*\}/.test(s);
+  function padraoModelo(s) {
+    const partes = String(s).trim().replace(/\s+/g, " ").split(/\{[^}\n]*\}/);
+    const re = partes.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[\\s\\S]+?");
+    return new RegExp("^" + re + "$", "i");
+  }
+  const casaModelo = (modelo, valor) => padraoModelo(modelo).test(String(valor).trim().replace(/\s+/g, " "));
+  const linhas = (s) => String(s || "").split("\n").map((l) => l.trim()).filter(Boolean);
+  const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+  const semAcento = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+  function modeloAtual() { return modelos.find((m) => m.id === $("modelo").value) || null; }
+  function lerEmail() { const e = {}; CAMPOS.forEach((c) => (e[c] = $(c).value)); return e; }
+
+  /* ---------- verificações ---------- */
+  function conferir(e, mod) {
+    const r = [];
+    const add = (sev, grupo, msg, campo) => r.push({ sev, grupo, msg, campo });
+
+    // Destinatários
+    const lista = { para: parseAddrs(e.para), cc: parseAddrs(e.cc), cco: parseAddrs(e.cco) };
+    const NOMES = { para: "Para", cc: "Cc", cco: "Cco" };
+    if (!lista.para.length) add("erro", "Destinatários", "Ninguém no campo Para.", "para");
+    else add("ok", "Destinatários", `${lista.para.length} pessoa(s) no Para.`, "para");
+    let invalidos = 0, digitacao = 0;
+    const vistos = {};
+    Object.keys(lista).forEach((campo) => {
+      lista[campo].forEach((a) => {
+        const em = a.email;
+        if (temChave(em)) { add("erro", "Destinatários", `Ficou a parte variável <b>${esc(em)}</b> no ${NOMES[campo]}. Troque pelo endereço de verdade.`, campo); invalidos++; return; }
+        if (!EMAIL_RE.test(em) || /\.\./.test(em)) { add("erro", "Destinatários", `<b>${esc(em)}</b> no ${NOMES[campo]} não é um endereço válido.`, campo); invalidos++; return; }
+        const dom = em.split("@")[1].toLowerCase();
+        if (DOMINIOS_ERRADOS[dom]) { add("erro", "Destinatários", `<b>${esc(em)}</b>: o certo deve ser <b>@${DOMINIOS_ERRADOS[dom]}</b>.`, campo); digitacao++; }
+        else if (FINAIS_ERRADOS.test(dom)) { add("aviso", "Destinatários", `<b>${esc(em)}</b>: o final <b>@${esc(dom)}</b> parece errado.`, campo); digitacao++; }
+        const k = em.toLowerCase();
+        if (vistos[k]) add("aviso", "Destinatários", `<b>${esc(em)}</b> aparece duas vezes (${vistos[k]} e ${NOMES[campo]}).`, campo);
+        else vistos[k] = NOMES[campo];
+      });
+    });
+    const total = lista.para.length + lista.cc.length + lista.cco.length;
+    if (total && !invalidos && !digitacao) add("ok", "Destinatários", "Todos os endereços estão bem escritos.", "para");
+
+    // Assunto
+    const as = e.assunto.trim();
+    if (!as) add("erro", "Assunto", "O assunto está vazio.", "assunto");
+    else {
+      if (temChave(as)) add("erro", "Assunto", `O assunto ainda tem <b>${esc(as.match(/\{[^}\n]*\}/)[0])}</b> para preencher.`, "assunto");
+      if (as.length > 90) add("aviso", "Assunto", `Assunto longo (${as.length} letras). Pode aparecer cortado.`, "assunto");
+      if (as.length > 8 && as === as.toUpperCase() && /[A-Z]/.test(as)) add("aviso", "Assunto", "Assunto todo em maiúsculas parece grito.", "assunto");
+      if (!temChave(as)) add("ok", "Assunto", "Assunto preenchido.", "assunto");
+    }
+
+    // Texto
+    const corpo = e.corpo;
+    const lns = linhas(corpo);
+    if (!lns.length) add("erro", "Texto", "O texto do e-mail está vazio.", "corpo");
+    else {
+      const chaves = corpo.match(/\{[^}\n]*\}/g);
+      if (chaves) add("erro", "Texto", `Faltou preencher: ${[...new Set(chaves)].map((c) => `<b>${esc(c)}</b>`).join(", ")}.`, "corpo");
+      const marcas = corpo.match(/\b(XXX+|xx\/xx(\/xx(xx)?)?|_{3,}|fulan[oa] de tal)\b|\[(inserir|nome|data|cliente|valor)[^\]\n]*\]|<(inserir|nome|data)[^>\n]*>/gi);
+      if (marcas) add("erro", "Texto", `Tem marcação para preencher: ${[...new Set(marcas)].map((c) => `<b>${esc(c)}</b>`).join(", ")}.`, "corpo");
+      if (!chaves && !marcas) add("ok", "Texto", "Nenhuma parte esquecida para preencher.", "corpo");
+
+      const prim = semAcento(lns[0]);
+      if (/^(ola|oi|bom dia|boa tarde|boa noite|prezad|car[oa]s?\b|sr|sra|senhor|ilustr|dear|hello|hi\b|a\/c|ao\b|a\b|aos\b|as\b|pessoal|time|equipe)/.test(prim)) add("ok", "Texto", "Tem cumprimento no início.", "corpo");
+      else add("aviso", "Texto", "Não achei cumprimento no início (ex.: “Bom dia, Carla.”).", "corpo");
+
+      const fim = semAcento(lns.slice(-5).join(" "));
+      if (/(atenciosamente|att\b|abraco|abs\b|obrigad|cordialmente|grat[oa]|saudacoes|regards|ate mais|fico a disposicao|estou a disposicao)/.test(fim)) add("ok", "Texto", "Tem despedida no final.", "corpo");
+      else add("aviso", "Texto", "Não achei despedida/assinatura no final (ex.: “Atenciosamente,”).", "corpo");
+
+      const h = new Date().getHours();
+      if (/^bom dia/.test(prim) && h >= 12) add("aviso", "Texto", `Você escreveu “Bom dia”, mas já são ${h}h.`, "corpo");
+      if (/^boa tarde/.test(prim) && (h < 12 || h >= 18)) add("aviso", "Texto", `Você escreveu “Boa tarde”, mas agora são ${h}h.`, "corpo");
+      if (/^boa noite/.test(prim) && h >= 5 && h < 18) add("aviso", "Texto", `Você escreveu “Boa noite”, mas agora são ${h}h.`, "corpo");
+
+      const rep = corpo.match(/(^|[^\p{L}])(\p{L}+)\s+\2(?![\p{L}])/giu);
+      if (rep) {
+        const ps = [...new Set(rep.map((x) => x.trim().replace(/^[^\p{L}]+/u, "")))].filter((x) => { const w = x.split(/\s+/); return w[0].toLowerCase() === w[1].toLowerCase(); });
+        if (ps.length) add("aviso", "Texto", `Palavra repetida: ${ps.map((p) => `<b>${esc(p)}</b>`).join(", ")}.`, "corpo");
+      }
+    }
+
+    // Datas
+    const txtData = e.assunto + "\n" + corpo;
+    const ano = new Date().getFullYear();
+    const reData = /(?:(domingo|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado)(?:-feira)?,?\s*(?:dia\s+)?)?\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b(?:\s*\((domingo|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado)(?:-feira)?\))?/gi;
+    let m, datas = 0, datasRuins = 0;
+    while ((m = reData.exec(txtData))) {
+      const d = +m[2], mes = +m[3];
+      let a = m[4] ? +m[4] : ano;
+      if (a < 100) a += 2000;
+      if (mes < 1 || mes > 12) continue;
+      datas++;
+      const dt = new Date(a, mes - 1, d);
+      const txt = m[0].trim();
+      if (dt.getMonth() !== mes - 1 || d < 1) { add("erro", "Datas", `A data <b>${esc(txt)}</b> não existe.`, "corpo"); datasRuins++; continue; }
+      const escrito = m[1] || m[5];
+      if (escrito) {
+        const real = DIAS[dt.getDay()];
+        if (semAcento(escrito) !== semAcento(real)) {
+          add("erro", "Datas", `<b>${esc(txt)}</b>: o dia ${String(d).padStart(2, "0")}/${String(mes).padStart(2, "0")}/${a} cai num(a) <b>${real}${dt.getDay() > 0 && dt.getDay() < 6 ? "-feira" : ""}</b>.`, "corpo");
+          datasRuins++;
+        }
+      }
+    }
+    if (datas && !datasRuins) add("ok", "Datas", `${datas} data(s) conferida(s).`, "corpo");
+
+    // Anexos
+    const anexos = linhas(e.anexos);
+    const falaAnexo = /(em anexo|anexad[oa]s?|anexo|segue[m]? (o|a|os|as) (arquivo|planilha|documento|relat[óo]rio|contrato|comprovante|nota)|attached|attachment)/i.test(txtData);
+    if (falaAnexo && !anexos.length) add("erro", "Anexos", "O texto fala de anexo, mas não tem nenhum arquivo anexado.", "anexos");
+    else if (!falaAnexo && anexos.length) add("aviso", "Anexos", `Tem ${anexos.length} anexo(s), mas o texto não menciona.`, "anexos");
+    else if (anexos.length) add("ok", "Anexos", `${anexos.length} anexo(s) e o texto menciona.`, "anexos");
+
+    // Modelo
+    if (mod) {
+      const atuais = new Set([...lista.para, ...lista.cc, ...lista.cco].map((a) => a.email.toLowerCase()));
+      const atuaisPara = new Set(lista.para.map((a) => a.email.toLowerCase()));
+      const atuaisCc = new Set([...lista.cc, ...lista.cco].map((a) => a.email.toLowerCase()));
+      const espPara = parseAddrs(mod.para).map((a) => a.email).filter((x) => !temChave(x));
+      const espCc = parseAddrs(mod.cc).map((a) => a.email).filter((x) => !temChave(x));
+      let faltam = 0;
+      espPara.forEach((x) => {
+        const k = x.toLowerCase();
+        if (atuaisPara.has(k)) return;
+        faltam++;
+        if (atuais.has(k)) add("aviso", "Modelo", `<b>${esc(x)}</b> deveria estar no Para, mas está em cópia.`, "para");
+        else add("erro", "Modelo", `Faltou <b>${esc(x)}</b> no Para.`, "para");
+      });
+      espCc.forEach((x) => {
+        const k = x.toLowerCase();
+        if (atuaisCc.has(k)) return;
+        faltam++;
+        if (atuais.has(k)) add("aviso", "Modelo", `<b>${esc(x)}</b> deveria estar em cópia, mas está no Para.`, "cc");
+        else add("erro", "Modelo", `Faltou <b>${esc(x)}</b> em cópia.`, "cc");
+      });
+      const esperados = new Set([...espPara, ...espCc].map((x) => x.toLowerCase()));
+      const temVariavel = temChave(mod.para) || temChave(mod.cc);
+      if (!temVariavel) {
+        [...lista.para, ...lista.cc, ...lista.cco].forEach((a) => {
+          if (!esperados.has(a.email.toLowerCase()) && EMAIL_RE.test(a.email)) add("aviso", "Modelo", `<b>${esc(a.email)}</b> não está no modelo. Era para ir para essa pessoa?`, "cc");
+        });
+      }
+      if (!faltam && (espPara.length || espCc.length)) add("ok", "Modelo", "Todos os destinatários do modelo estão no e-mail.", "para");
+
+      if (mod.assunto.trim()) {
+        if (casaModelo(mod.assunto, e.assunto)) add("ok", "Modelo", "Assunto igual ao modelo.", "assunto");
+        else add("aviso", "Modelo", `Assunto diferente do modelo: <b>${esc(mod.assunto)}</b>`, "assunto");
+      }
+
+      linhas(mod.anexos).forEach((esp) => {
+        const ok = anexos.some((a) => casaModelo(esp, a));
+        if (!ok) add("erro", "Modelo", `Faltou o anexo <b>${esc(esp)}</b>.`, "anexos");
+      });
+      if (linhas(mod.anexos).length && linhas(mod.anexos).every((esp) => anexos.some((a) => casaModelo(esp, a)))) add("ok", "Modelo", "Todos os anexos do modelo estão aqui.", "anexos");
+
+      if (mod.corpo.trim() && e.corpo.trim()) {
+        const d = diffResumo(mod.corpo, e.corpo);
+        if (d === null) add("aviso", "Modelo", "Texto grande demais para comparar com o modelo.", "corpo");
+        else if (d.removidos) add("aviso", "Modelo", `${d.removidos} trecho(s) do modelo foram apagados ou mudados. Veja em “Diferenças”.`, "corpo");
+        else add("ok", "Modelo", "O texto segue o modelo.", "corpo");
+      }
+    }
+    return r;
+  }
+
+  /* ---------- diferenças palavra a palavra ---------- */
+  const tokens = (s) => String(s).match(/(?:\{[^}\n]*\}|[^\s{])+|\s+|\{/g) || [];
+  function lcsOps(a, b) {
+    const A = a.filter((t) => !/^\s+$/.test(t)), B = b;
+    const bw = B.map((t, i) => [t, i]).filter(([t]) => !/^\s+$/.test(t));
+    const n = A.length, m = bw.length;
+    if (n * m > 6e6) return null;
+    const dp = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+      dp[i][j] = A[i] === bw[j][0] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    const ops = []; let i = 0, j = 0;
+    while (i < n || j < m) {
+      if (i < n && j < m && A[i] === bw[j][0]) { ops.push({ t: "=", s: A[i], bi: bw[j][1] }); i++; j++; }
+      else if (j < m && (i >= n || dp[i][j + 1] >= dp[i + 1][j])) { ops.push({ t: "+", s: bw[j][0], bi: bw[j][1] }); j++; }
+      else { ops.push({ t: "-", s: A[i] }); i++; }
+    }
+    return { ops, B };
+  }
+  function diffResumo(modelo, atual) {
+    const r = lcsOps(tokens(modelo), tokens(atual));
+    if (!r) return null;
+    let removidos = 0, emBloco = false;
+    r.ops.forEach((o) => {
+      if (o.t === "-" && !temChave(o.s)) { if (!emBloco) removidos++; emBloco = true; }
+      else if (o.t === "=") emBloco = false;
+    });
+    return { removidos };
+  }
+  function renderDiff(mod, atual) {
+    const box = $("diff");
+    if (!mod) { box.innerHTML = '<span class="empty">Escolha um modelo para ver as diferenças.</span>'; return; }
+    if (!mod.corpo.trim() || !atual.trim()) { box.innerHTML = '<span class="empty">O modelo ou o e-mail ainda não tem texto.</span>'; return; }
+    const r = lcsOps(tokens(mod.corpo), tokens(atual));
+    if (!r) { box.textContent = "Texto grande demais para comparar."; return; }
+    let html = "", ultimoBi = -1;
+    const espacoAte = (bi) => { let s = ""; for (let k = ultimoBi + 1; k < bi; k++) if (/^\s+$/.test(r.B[k])) s += r.B[k]; return s; };
+    r.ops.forEach((o) => {
+      if (o.t === "-") { html += `<del class="${temChave(o.s) ? "var" : ""}">${esc(o.s)}</del> `; return; }
+      html += esc(espacoAte(o.bi));
+      ultimoBi = o.bi;
+      html += o.t === "+" ? `<ins>${esc(o.s)}</ins>` : esc(o.s);
+    });
+    box.innerHTML = html;
+  }
+
+  /* ---------- tela ---------- */
+  let ultimoEstado = "";
+  function render() {
+    const e = lerEmail();
+    const mod = modeloAtual();
+    const res = conferir(e, mod);
+    const erros = res.filter((x) => x.sev === "erro"), avisos = res.filter((x) => x.sev === "aviso"), oks = res.filter((x) => x.sev === "ok");
+
+    const item = (x) => `<li class="check ${x.sev}" data-campo="${x.campo}" tabindex="0"><span class="ic">${x.sev === "ok" ? "✓" : x.sev === "erro" ? "!" : "?"}</span><span class="msg"><span class="grp">${x.grupo}</span>${x.msg}</span></li>`;
+    $("problemas").innerHTML = [...erros, ...avisos].map(item).join("") || '<li class="empty">Nenhum problema encontrado.</li>';
+    $("oks").innerHTML = oks.map(item).join("");
+    $("oks-sum").textContent = `${oks.length} verificações certas`;
+    $("oks-wrap").hidden = !oks.length;
+    $("n-err").textContent = erros.length; $("n-warn").textContent = avisos.length; $("n-ok").textContent = oks.length;
+
+    // destaque nos campos
+    document.querySelectorAll(".field[data-f]").forEach((f) => {
+      const c = f.dataset.f;
+      f.classList.toggle("has-err", erros.some((x) => x.campo === c));
+      f.classList.toggle("has-warn", !erros.some((x) => x.campo === c) && avisos.some((x) => x.campo === c));
+    });
+
+    // lista manual
+    const itens = linhas(mod ? mod.checklist : CHECKLIST_GERAL);
+    const chave = mod ? mod.id : "_geral";
+    marcados[chave] = marcados[chave] || {};
+    $("manual").innerHTML = itens.length
+      ? itens.map((t, i) => `<label class="item ${marcados[chave][t] ? "done" : ""}"><input type="checkbox" id="mc-${i}" data-t="${esc(t)}" ${marcados[chave][t] ? "checked" : ""}><span>${esc(t)}</span></label>`).join("")
+      : '<span class="empty">Este modelo não tem itens para conferir na mão.</span>';
+    const pendentes = itens.filter((t) => !marcados[chave][t]).length;
+
+    let est, carimbo, texto;
+    if (erros.length) { est = "s-err"; carimbo = "Não envie ainda"; texto = `Corrija ${erros.length === 1 ? "1 erro" : erros.length + " erros"} antes de enviar.`; }
+    else if (avisos.length || pendentes) {
+      est = "s-warn"; carimbo = "Quase lá";
+      const p = [];
+      if (avisos.length) p.push(`veja ${avisos.length === 1 ? "1 aviso" : avisos.length + " avisos"}`);
+      if (pendentes) p.push(`marque ${pendentes === 1 ? "1 item" : pendentes + " itens"} da lista`);
+      texto = p.join(" e ").replace(/^./, (c) => c.toUpperCase()) + ".";
+    } else { est = "s-ok"; carimbo = "Pode enviar"; texto = "Tudo conferido. Pode enviar."; }
+    const st = $("stamp");
+    if (ultimoEstado !== est) { st.classList.remove("pop"); void st.offsetWidth; st.classList.add("pop"); ultimoEstado = est; }
+    st.className = "stamp " + est + (st.classList.contains("pop") ? " pop" : "");
+    st.textContent = carimbo;
+    $("v-texto").textContent = texto;
+    const bb = $("bar-btn"); bb.className = "pill " + est; bb.textContent = `${carimbo} · ${erros.length} erros · ${avisos.length} avisos`;
+
+    // anexos em chips
+    $("chips").innerHTML = linhas(e.anexos).map((a) => `<span class="chip">${esc(a)}</span>`).join("");
+
+    renderDiff(mod, e.corpo);
+  }
+
+  function popularModelos(sel) {
+    $("modelo").innerHTML = '<option value="">Sem modelo (só conferência geral)</option>' + modelos.map((m) => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`).join("");
+    $("modelo").value = sel != null ? sel : "";
+  }
+  function salvarRascunho() { store.set("ce.rascunho", Object.assign(lerEmail(), { modelo: $("modelo").value })); }
+  function carregarEmail(e) { CAMPOS.forEach((c) => ($(c).value = e[c] || "")); }
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2200);
+  }
+  async function copiar(texto, rotulo) {
+    try { await navigator.clipboard.writeText(texto); toast(`${rotulo} copiado`); }
+    catch (err) {
+      const ta = document.createElement("textarea"); ta.value = texto; document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch (e2) {}
+      ta.remove(); toast(ok ? `${rotulo} copiado` : "Não deu para copiar. Selecione o texto e use Ctrl+C.");
+    }
+  }
+  function sairDoExemplo() { $("aviso-exemplo").hidden = true; }
+
+  /* ---------- eventos ---------- */
+  CAMPOS.forEach((c) => $(c).addEventListener("input", () => { sairDoExemplo(); salvarRascunho(); render(); }));
+  $("modelo").addEventListener("change", () => { salvarRascunho(); fecharEditor(); render(); });
+
+  $("arquivos").addEventListener("change", (ev) => {
+    const nomes = [...ev.target.files].map((f) => f.name);
+    const atual = linhas($("anexos").value);
+    $("anexos").value = [...atual, ...nomes.filter((n) => !atual.includes(n))].join("\n");
+    ev.target.value = "";
+    sairDoExemplo(); salvarRascunho(); render();
+  });
+
+  $("b-preencher").addEventListener("click", () => {
+    const m = modeloAtual();
+    if (!m) { toast("Escolha um modelo primeiro"); return; }
+    carregarEmail({ para: m.para, cc: m.cc, cco: "", assunto: m.assunto, corpo: m.corpo, anexos: "" });
+    marcados[m.id] = {};
+    sairDoExemplo(); salvarRascunho(); render();
+    toast("E-mail começado a partir do modelo. Preencha as partes em {chaves}.");
+    $("corpo").focus();
+  });
+
+  function abrirEditor(m) {
+    editandoId = m ? m.id : null;
+    $("t-editor").textContent = m && modelos.some((x) => x.id === m.id) ? "Editando modelo" : "Novo modelo";
+    $("m-nome").value = m ? m.nome : "";
+    ["para", "cc", "assunto", "corpo", "anexos", "checklist"].forEach((k) => ($("m-" + k).value = m ? m[k] || "" : ""));
+    $("m-excluir").hidden = !(m && modelos.some((x) => x.id === m.id));
+    $("m-excluir").classList.remove("armed"); $("m-excluir").textContent = "Excluir modelo";
+    $("editor").hidden = false;
+    $("editor").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("m-nome").focus();
+  }
+  function fecharEditor() { $("editor").hidden = true; editandoId = null; }
+  $("b-editar").addEventListener("click", () => { const m = modeloAtual(); if (!m) { toast("Escolha um modelo para editar"); return; } abrirEditor(m); });
+  $("b-novo").addEventListener("click", () => abrirEditor(null));
+  $("b-salvar-atual").addEventListener("click", () => {
+    const e = lerEmail();
+    abrirEditor({ id: null, nome: e.assunto ? e.assunto.slice(0, 40) : "", para: e.para, cc: e.cc, assunto: e.assunto, corpo: e.corpo, anexos: e.anexos, checklist: CHECKLIST_GERAL });
+    $("t-editor").textContent = "Novo modelo a partir deste e-mail";
+    toast("Troque as partes que mudam por {chaves} e salve");
+  });
+  $("m-fechar").addEventListener("click", fecharEditor);
+  $("m-salvar").addEventListener("click", () => {
+    const nome = $("m-nome").value.trim();
+    if (!nome) { toast("Dê um nome ao modelo"); $("m-nome").focus(); return; }
+    const dados = { nome };
+    ["para", "cc", "assunto", "corpo", "anexos", "checklist"].forEach((k) => (dados[k] = $("m-" + k).value));
+    let id = editandoId;
+    if (id && modelos.some((m) => m.id === id)) modelos = modelos.map((m) => (m.id === id ? Object.assign({ id }, dados) : m));
+    else { id = "m" + Date.now().toString(36); modelos.push(Object.assign({ id }, dados)); }
+    store.set("ce.modelos", modelos);
+    popularModelos(id); fecharEditor(); salvarRascunho(); render();
+    toast("Modelo salvo");
+  });
+  $("m-excluir").addEventListener("click", () => {
+    const b = $("m-excluir");
+    if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Clique de novo para excluir"; setTimeout(() => { b.classList.remove("armed"); b.textContent = "Excluir modelo"; }, 4000); return; }
+    modelos = modelos.filter((m) => m.id !== editandoId);
+    store.set("ce.modelos", modelos);
+    popularModelos(""); fecharEditor(); salvarRascunho(); render();
+    toast("Modelo excluído");
+  });
+
+  function limpar() {
+    carregarEmail({}); sairDoExemplo(); salvarRascunho();
+    const m = modeloAtual(); if (m) marcados[m.id] = {}; marcados._geral = {};
+    render(); $("para").focus();
+  }
+  $("b-limpar").addEventListener("click", limpar);
+  $("b-limpar2").addEventListener("click", limpar);
+
+  document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", () => {
+    const c = b.dataset.copy; copiar($(c).value, b.closest(".field").querySelector("label").textContent);
+  }));
+  $("b-copiar").addEventListener("click", () => {
+    const e = lerEmail();
+    const t = [`Para: ${e.para}`];
+    if (e.cc.trim()) t.push(`Cc: ${e.cc}`);
+    if (e.cco.trim()) t.push(`Cco: ${e.cco}`);
+    t.push(`Assunto: ${e.assunto}`, "", e.corpo);
+    if (linhas(e.anexos).length) t.push("", "Anexos: " + linhas(e.anexos).join(", "));
+    copiar(t.join("\n"), "E-mail");
+  });
+
+  function irPara(campo) { const el = $(campo); if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.focus({ preventScroll: true }); } }
+  $("painel").addEventListener("click", (ev) => { const li = ev.target.closest(".check"); if (li) irPara(li.dataset.campo); });
+  $("painel").addEventListener("keydown", (ev) => { const li = ev.target.closest(".check"); if (li && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); irPara(li.dataset.campo); } });
+  $("manual").addEventListener("change", (ev) => {
+    const cb = ev.target; if (!cb.dataset.t) return;
+    const m = modeloAtual(); const k = m ? m.id : "_geral";
+    marcados[k][cb.dataset.t] = cb.checked; render();
+  });
+  $("bar-btn").addEventListener("click", () => $("painel").scrollIntoView({ behavior: "smooth", block: "start" }));
+
+  /* ---------- início ---------- */
+  popularModelos(modelos.some((m) => m.id === rascunho.modelo) ? rascunho.modelo : "");
+  carregarEmail(rascunho);
+  $("aviso-exemplo").hidden = !rascunho.exemplo;
+  render();
+})();
+</script>
